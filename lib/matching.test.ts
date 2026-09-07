@@ -88,4 +88,19 @@ describe("rankTrucks", () => {
     assert.equal(ranked.find((r) => r.truck.id === "mis")?.eligible, false);
     assert.equal(ranked.find((r) => r.truck.id === "blk")?.eligible, false);
   });
+
+  it("penalizes trucks with unknown location versus a nearby GPS truck", () => {
+    const known = truck({ id: "gps", unitNumber: "1", driverName: "Known" });
+    const unknown = truck({
+      id: "unk",
+      unitNumber: "2",
+      driverName: "Unknown",
+      locationKnown: false,
+      lat: 0,
+      lng: 0,
+    });
+    const ranked = rankTrucks(load(), [unknown, known], now);
+    assert.equal(ranked[0].truck.id, "gps");
+    assert.ok(ranked.find((r) => r.truck.id === "unk")?.reasons.some((c) => c.label === "Location unknown"));
+  });
 });

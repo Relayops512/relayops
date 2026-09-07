@@ -5,6 +5,7 @@ function isPublic(pathname: string): boolean {
   return (
     pathname.startsWith("/login") ||
     pathname.startsWith("/api/auth") ||
+    pathname.startsWith("/api/fleet/template") ||
     pathname.startsWith("/_next") ||
     pathname === "/icon" ||
     pathname === "/favicon.ico"

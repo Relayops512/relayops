@@ -3,6 +3,7 @@ import { store } from "@/lib/store";
 import { AppHeader } from "@/components/AppHeader";
 import { formatMinutes } from "@/lib/geo";
 import { trailerLabel } from "@/lib/matching";
+import { FleetCsvUpload } from "@/components/FleetCsvUpload";
 
 const FILTERS = [
   { key: "available", label: "Available" },
@@ -48,6 +49,8 @@ export default async function FleetPage({
         canWrite={canWrite}
       />
 
+      <FleetCsvUpload canWrite={canWrite} />
+
       <div className="mb-4 flex flex-wrap gap-2">
         {FILTERS.map((f) => (
           <a
@@ -83,8 +86,9 @@ export default async function FleetPage({
                       Truck {truck.unitNumber} · {truck.driverName}
                     </p>
                     <p className="mt-1 text-sm text-ink-muted">
-                      {truck.city}, {truck.state} · Drive left: {formatMinutes(truck.hosDriveMinutes)} ·
-                      Duty left: {formatMinutes(truck.hosDutyMinutes)} · {trailerLabel(truck.trailerType)} ·{" "}
+                      {truck.locationKnown ? `${truck.city}, ${truck.state}` : "Location unknown"} ·
+                      Drive left: {formatMinutes(truck.hosDriveMinutes)} · Duty left:{" "}
+                      {formatMinutes(truck.hosDutyMinutes)} · {trailerLabel(truck.trailerType)} ·{" "}
                       {truck.weeklyLoadCount} load{truck.weeklyLoadCount === 1 ? "" : "s"} this week
                     </p>
                   </div>

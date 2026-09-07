@@ -91,9 +91,39 @@ See `.env.example`.
 
 - **Board** — KPIs + open loads. Select a load for ranked trucks.
 - **Load** — New load intake (pickup/delivery, windows, trailer, weight, notes). TMS import is stubbed.
-- **Fleet** — Filter available vs not. Location, HOS, equipment, readiness.
+- **Fleet** — Filter available vs not. Upload or paste a truck/driver CSV (replace or merge). Location, HOS, equipment, readiness.
 - **Audit** — Overrides, load imbalance, policy flags (override rate &gt; 10%).
 - **Setup** — Samsara placeholder config (demo mode on). Motive and Geotab marked later.
+
+## Fleet CSV upload
+
+Dispatchers can load a company fleet without Samsara from **Fleet** or **Setup**. Download the template at `/api/fleet/template` or use **Download template** in the app.
+
+| Column | Required | Notes |
+| --- | --- | --- |
+| `truckNumber` | yes | Aliases: `unit`, `unitNumber`, `truck` |
+| `driverName` | yes | Aliases: `driver`, `name` |
+| `trailerType` | no | `dry_van`, `reefer`, `flatbed` (default dry van) |
+| `lat`, `lng` | no | If omitted, location is unknown and match quality drops |
+| `hosDriveMinutesRemaining` | no | Default 480 |
+| `hosDutyMinutesRemaining` | no | Default 600 |
+| `mpg` | no | Fuel efficiency; default 7 |
+| `status` | no | `available` / `unavailable` (also legal_now, hos_blocked, maintenance) |
+| `weeklyLoadCount` | no | Used by the fairness score; default 0 |
+
+Example:
+
+```csv
+truckNumber,driverName,trailerType,lat,lng,hosDriveMinutesRemaining,hosDutyMinutesRemaining,mpg,status,weeklyLoadCount
+184,Marcus Hill,dry_van,39.7684,-86.1581,525,605,7.6,available,2
+191,Elena Ruiz,dry_van,38.2527,-85.7585,480,590,7.2,available,1
+203,Priya Shah,reefer,,,390,510,6.9,available,0
+```
+
+- **Replace** swaps the live truck list. **Merge** upserts by truck number.
+- Bad rows are listed and skipped. If the file has no valid rows, the current fleet is left unchanged.
+- Matching reads `store.listTrucks()` — the same list the board uses — so an import is live immediately.
+- On Vercel the fleet is in-memory: it lasts for the serverless instance and **resets to demo trucks on a cold start**. Paste the CSV again after a reset. Samsara is still optional later for live GPS/HOS.
 
 ## Stack
 

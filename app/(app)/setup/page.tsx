@@ -3,6 +3,7 @@ import { store } from "@/lib/store";
 import { AppHeader } from "@/components/AppHeader";
 import { saveSamsaraSettingsAction } from "@/lib/actions";
 import { formatWhen } from "@/lib/format";
+import { FleetCsvUpload } from "@/components/FleetCsvUpload";
 
 export default async function SetupPage() {
   const session = await auth();
@@ -16,6 +17,8 @@ export default async function SetupPage() {
         subtitle="Samsara is the first ELD/telematics connector. Motive and Geotab come next."
         canWrite={canWrite}
       />
+
+      <FleetCsvUpload canWrite={canWrite} />
 
       <section className="card p-5">
         <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
