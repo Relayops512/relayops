@@ -1,5 +1,5 @@
 import { auth, isDispatcher } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
+import { store } from "@/lib/store";
 import { AppHeader } from "@/components/AppHeader";
 import { saveSamsaraSettingsAction } from "@/lib/actions";
 import { formatWhen } from "@/lib/format";
@@ -7,7 +7,7 @@ import { formatWhen } from "@/lib/format";
 export default async function SetupPage() {
   const session = await auth();
   const canWrite = isDispatcher(session?.user.role);
-  const setting = await prisma.integrationSetting.findUnique({ where: { id: "samsara" } });
+  const setting = store.getIntegration();
 
   return (
     <div>

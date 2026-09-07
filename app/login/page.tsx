@@ -1,7 +1,9 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
-import { loginAction } from "@/lib/actions";
+import { loginAction } from "@/lib/login-actions";
 import { DemoBadge } from "@/components/DemoBadge";
+
+export const dynamic = "force-dynamic";
 
 export default async function LoginPage({
   searchParams,

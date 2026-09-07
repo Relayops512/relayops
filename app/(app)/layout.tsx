@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { auth, isDispatcher } from "@/lib/auth";
 import { BottomNav } from "@/components/BottomNav";
-import { logoutAction } from "@/lib/actions";
+import { logoutAction } from "@/lib/login-actions";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const session = await auth();

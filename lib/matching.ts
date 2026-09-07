@@ -1,4 +1,4 @@
-import { TrailerType, TruckReadiness } from "@prisma/client";
+import type { TrailerType, TruckReadiness } from "./types";
 import { CRUISE_MPH, haversineMiles, hoursForMiles } from "./geo";
 
 export type MatchLoad = {

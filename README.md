@@ -25,14 +25,14 @@ npm install
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000). `npm run dev` generates the Prisma client, creates the SQLite database, and seeds demo data if the database is empty.
+Open [http://localhost:3000](http://localhost:3000). The app boots an in-memory demo fleet (same accounts and trucks as production). No database is required for the company demo.
 
 Useful commands:
 
 ```bash
-npm run db:reset   # wipe and reseed
 npm test           # matching + distance unit tests
 npm run build      # production build
+npm run db:reset   # optional local Prisma/SQLite seed (not used by the Vercel demo)
 ```
 
 ## What the matching engine scores
@@ -56,13 +56,14 @@ Legal-now + trailer match + enough HOS is **eligible**. Picking anyone else is a
 
 1. Push this repo to GitHub.
 2. Import the project at [vercel.com/new](https://vercel.com/new).
-3. Set environment variables:
+3. Set environment variables (no paid database required):
    - `AUTH_SECRET` — `openssl rand -base64 32`
-   - `AUTH_URL` — `https://<your-app>.vercel.app`
-   - `DATABASE_URL` — `file:./dev.db`
+   - `AUTH_URL` — `https://relayops.vercel.app` (or your Vercel URL)
+   - `AUTH_TRUST_HOST` — `true`
+   - `DATABASE_URL` is optional and unused on Vercel
 4. Deploy. Share the URL plus the demo dispatcher account.
 
-**SQLite note:** Vercel’s filesystem is ephemeral. The build seeds a demo database so the first visit works. Writes (new loads, assignments) may reset on a new serverless instance. That is fine for a click-through demo. For a week-long company pilot with real dispatcher traffic, use Postgres (below).
+Production uses an **in-memory demo store** so serverless functions do not need a writable SQLite file. Login, matching, assign, and audit work for a click-through pilot. Writes reset when a new serverless instance starts. For a week-long company pilot with durable traffic, use Postgres (below).
 
 ### Persistent pilot (recommended for a real fleet test)
 
@@ -81,9 +82,10 @@ See `.env.example`.
 
 | Name | Required | Purpose |
 | --- | --- | --- |
-| `DATABASE_URL` | yes | Prisma connection (`file:./dev.db` locally) |
 | `AUTH_SECRET` | yes in production | Session signing key |
 | `AUTH_URL` | recommended | Canonical app URL for Auth.js |
+| `AUTH_TRUST_HOST` | recommended on Vercel | Allow Auth.js behind the Vercel proxy |
+| `DATABASE_URL` | optional | Only for local Prisma/SQLite (`file:./dev.db`) |
 
 ## Product map
 
@@ -95,4 +97,4 @@ See `.env.example`.
 
 ## Stack
 
-Next.js App Router, TypeScript, Tailwind CSS, Prisma + SQLite, Auth.js (credentials / JWT). Roles: `DISPATCHER` and `VIEWER`.
+Next.js App Router, TypeScript, Tailwind CSS, Auth.js (credentials / JWT), in-memory demo store (Prisma + SQLite optional locally). Roles: `DISPATCHER` and `VIEWER`.

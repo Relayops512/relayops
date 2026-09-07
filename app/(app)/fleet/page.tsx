@@ -1,5 +1,5 @@
 import { auth, isDispatcher } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
+import { store } from "@/lib/store";
 import { AppHeader } from "@/components/AppHeader";
 import { formatMinutes } from "@/lib/geo";
 import { trailerLabel } from "@/lib/matching";
@@ -31,7 +31,7 @@ export default async function FleetPage({
   const session = await auth();
   const canWrite = isDispatcher(session?.user.role);
   const { filter = "available" } = await searchParams;
-  const trucks = await prisma.truck.findMany({ orderBy: { unitNumber: "asc" } });
+  const trucks = store.listTrucks();
   const available = trucks.filter((t) => t.readiness === "LEGAL_NOW");
   const shown =
     filter === "blocked"
