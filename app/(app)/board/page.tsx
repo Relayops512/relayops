@@ -38,7 +38,7 @@ export default async function BoardPage() {
         <KpiCard
           label="Overrides"
           value={`${Math.round(kpis.overridePct)}%`}
-          note={`${kpis.overPolicyCount} dispatchers above policy.`}
+          note={`${kpis.overPolicyCount} dispatcher${kpis.overPolicyCount === 1 ? "" : "s"} above policy.`}
         />
       </section>
 

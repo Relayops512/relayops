@@ -85,7 +85,7 @@ export default async function FleetPage({
                     <p className="mt-1 text-sm text-ink-muted">
                       {truck.city}, {truck.state} · Drive left: {formatMinutes(truck.hosDriveMinutes)} ·
                       Duty left: {formatMinutes(truck.hosDutyMinutes)} · {trailerLabel(truck.trailerType)} ·{" "}
-                      {truck.weeklyLoadCount} loads this week
+                      {truck.weeklyLoadCount} load{truck.weeklyLoadCount === 1 ? "" : "s"} this week
                     </p>
                   </div>
                   <span className={`chip shrink-0 ${badge.className}`}>{badge.text}</span>

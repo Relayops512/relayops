@@ -50,6 +50,7 @@ export function AssignPanel({
   return (
     <form action={onSubmit} className="space-y-3">
       <input type="hidden" name="loadId" value={loadId} />
+      <input type="hidden" name="truckId" value={selected} />
       <input type="hidden" name="isOverride" value={isOverride ? "true" : "false"} />
       <ul className="space-y-3">
         {matches.map((match, index) => (
@@ -62,7 +63,7 @@ export function AssignPanel({
               <div className="flex items-start gap-3">
                 <input
                   type="radio"
-                  name="truckId"
+                  name="selectedTruck"
                   value={match.truckId}
                   checked={selected === match.truckId}
                   onChange={() => setSelected(match.truckId)}
