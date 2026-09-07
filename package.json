@@ -4,11 +4,10 @@
   "private": true,
   "description": "RelayOps — rules-based truck dispatch without favorites",
   "scripts": {
-    "dev": "npm run db:ensure && next dev --turbopack",
-    "build": "prisma generate && next build",
+    "dev": "next dev --turbopack",
+    "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "postinstall": "prisma generate",
     "db:ensure": "prisma generate && prisma db push && tsx prisma/seed.ts",
     "db:push": "prisma db push",
     "db:seed": "tsx prisma/seed.ts",

@@ -1,17 +1,10 @@
-import { prisma } from "@/lib/prisma";
+import { store } from "@/lib/store";
 import { estimateDeadhead, rankTrucks } from "@/lib/matching";
 
 export async function getDashboard() {
-  const [loads, trucks, assignments] = await Promise.all([
-    prisma.load.findMany({
-      where: { status: "OPEN" },
-      orderBy: [{ priority: "desc" }, { pickupWindowStart: "asc" }],
-    }),
-    prisma.truck.findMany({ orderBy: { unitNumber: "asc" } }),
-    prisma.assignment.findMany({
-      include: { assignedBy: true },
-    }),
-  ]);
+  const loads = store.listOpenLoads();
+  const trucks = store.listTrucks();
+  const assignments = store.listAssignments();
 
   const legalNow = trucks.filter((t) => t.readiness === "LEGAL_NOW").length;
   const hosBlocked = trucks.filter((t) => t.readiness === "HOS_BLOCKED").length;
@@ -58,33 +51,18 @@ export async function getDashboard() {
 }
 
 export async function getLoadWithMatches(id: string) {
-  const [load, trucks, assignment] = await Promise.all([
-    prisma.load.findUnique({ where: { id } }),
-    prisma.truck.findMany(),
-    prisma.assignment.findFirst({
-      where: { loadId: id },
-      include: { truck: true, assignedBy: true },
-      orderBy: { createdAt: "desc" },
-    }),
-  ]);
+  const load = store.getLoad(id);
+  const trucks = store.listTrucks();
+  const assignment = store.getAssignmentForLoad(id);
   if (!load) return null;
   const matches = rankTrucks(load, trucks);
   return { load, matches, assignment };
 }
 
 export async function getAuditData() {
-  const [events, assignments, trucks] = await Promise.all([
-    prisma.auditEvent.findMany({
-      include: { actor: true },
-      orderBy: { createdAt: "desc" },
-      take: 40,
-    }),
-    prisma.assignment.findMany({
-      include: { load: true, truck: true, assignedBy: true },
-      orderBy: { createdAt: "desc" },
-    }),
-    prisma.truck.findMany({ orderBy: { weeklyLoadCount: "desc" } }),
-  ]);
+  const events = store.listAuditEvents(40);
+  const assignments = store.listAssignments();
+  const trucks = [...store.listTrucks()].sort((a, b) => b.weeklyLoadCount - a.weeklyLoadCount);
 
   const byDispatcher = new Map<string, { name: string; total: number; overrides: number }>();
   for (const a of assignments) {
