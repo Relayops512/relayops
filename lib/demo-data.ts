@@ -131,6 +131,7 @@ export function createDemoState(): DemoState {
     weeklyLoadCount: t.weeklyLoadCount,
     fuelGallons: t.fuelGallons,
     lastPingAt: new Date(),
+    locationKnown: true,
   }));
 
   const loadRows: {

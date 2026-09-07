@@ -171,4 +171,27 @@ export const store = {
     state().integration.lastSyncAt = new Date();
     state().integration.demoMode = true;
   },
+
+  replaceTrucks(trucks: Truck[]) {
+    state().trucks = trucks;
+  },
+
+  mergeTrucks(incoming: Truck[]): { created: number; updated: number } {
+    const s = state();
+    let created = 0;
+    let updated = 0;
+    for (const truck of incoming) {
+      const idx = s.trucks.findIndex(
+        (t) => t.unitNumber.toLowerCase() === truck.unitNumber.toLowerCase(),
+      );
+      if (idx >= 0) {
+        s.trucks[idx] = { ...truck, id: s.trucks[idx].id };
+        updated += 1;
+      } else {
+        s.trucks.push(truck);
+        created += 1;
+      }
+    }
+    return { created, updated };
+  },
 };

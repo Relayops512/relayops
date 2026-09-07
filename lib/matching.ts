@@ -27,6 +27,7 @@ export type MatchTruck = {
   readiness: TruckReadiness;
   weeklyLoadCount: number;
   fuelGallons: number;
+  locationKnown?: boolean;
 };
 
 export type ScoreBreakdown = {
@@ -117,19 +118,22 @@ export function scoreTruck(
   fleetAvgWeekly: number,
   now = new Date(),
 ): TruckMatch {
-  const deadheadMiles = haversineMiles(
-    { lat: truck.lat, lng: truck.lng },
-    { lat: load.pickupLat, lng: load.pickupLng },
-  );
+  const locationKnown = truck.locationKnown !== false;
+  const deadheadMiles = locationKnown
+    ? haversineMiles(
+        { lat: truck.lat, lng: truck.lng },
+        { lat: load.pickupLat, lng: load.pickupLng },
+      )
+    : Number.NaN;
   const loadedMiles = haversineMiles(
     { lat: load.pickupLat, lng: load.pickupLng },
     { lat: load.deliveryLat, lng: load.deliveryLng },
   );
-  const totalMiles = deadheadMiles + loadedMiles;
+  const totalMiles = (locationKnown ? deadheadMiles : 80) + loadedMiles;
   const fuelGallons = totalMiles / Math.max(truck.mpg, 4);
   const fuelCostUsd = fuelGallons * DIESEL_USD;
 
-  const deadheadHours = hoursForMiles(deadheadMiles);
+  const deadheadHours = locationKnown ? hoursForMiles(deadheadMiles) : 2;
   const etaDate = new Date(now.getTime() + deadheadHours * 3600 * 1000);
   const windowStart = load.pickupWindowStart;
   const windowEnd = load.pickupWindowEnd;
@@ -151,9 +155,9 @@ export function scoreTruck(
 
   const breakdown: ScoreBreakdown = {
     hos: hosScore(truck.hosDriveMinutes, truck.hosDutyMinutes, neededHours),
-    deadhead: deadheadScore(deadheadMiles),
+    deadhead: locationKnown ? deadheadScore(deadheadMiles) : 28,
     fuel: fuelScore(fuelGallons),
-    eta: etaScore(arrivesInWindow, minutesEarlyOrLate),
+    eta: locationKnown ? etaScore(arrivesInWindow, minutesEarlyOrLate) : 40,
     trailer: trailerScore(trailerFit),
     fairness: fairnessScore(truck.weeklyLoadCount, fleetAvgWeekly),
   };
@@ -169,6 +173,7 @@ export function scoreTruck(
   if (!legalNow) score *= 0.35;
   if (trailerFit === "mismatch") score *= 0.45;
   if (!hosEnough) score *= 0.55;
+  if (!locationKnown) score *= 0.82;
   score = clamp(score);
 
   const reasons: ReasonChip[] = [];
@@ -177,10 +182,14 @@ export function scoreTruck(
   else if (truck.readiness === "ON_LOAD") reasons.push({ label: "On load", tone: "warn" });
   else reasons.push({ label: "Maintenance", tone: "bad" });
 
-  reasons.push({
-    label: `${Math.round(deadheadMiles)} mi deadhead`,
-    tone: deadheadMiles < 45 ? "good" : deadheadMiles < 120 ? "neutral" : "warn",
-  });
+  if (locationKnown) {
+    reasons.push({
+      label: `${Math.round(deadheadMiles)} mi deadhead`,
+      tone: deadheadMiles < 45 ? "good" : deadheadMiles < 120 ? "neutral" : "warn",
+    });
+  } else {
+    reasons.push({ label: "Location unknown", tone: "warn" });
+  }
   reasons.push({
     label: hosEnough ? `${formatDrive(truck.hosDriveMinutes)} drive left` : "HOS short for trip",
     tone: hosEnough ? "good" : "bad",
@@ -207,7 +216,7 @@ export function scoreTruck(
     truck,
     score: Math.round(score * 10) / 10,
     breakdown,
-    deadheadMiles,
+    deadheadMiles: locationKnown ? deadheadMiles : 0,
     loadedMiles,
     fuelGallons,
     fuelCostUsd,
@@ -252,6 +261,7 @@ export function rankTrucks(load: MatchLoad, trucks: MatchTruck[], now = new Date
 }
 
 export function estimateDeadhead(truck: MatchTruck, load: MatchLoad): number {
+  if (truck.locationKnown === false) return Number.POSITIVE_INFINITY;
   return haversineMiles(
     { lat: truck.lat, lng: truck.lng },
     { lat: load.pickupLat, lng: load.pickupLng },

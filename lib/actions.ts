@@ -190,3 +190,98 @@ export async function syncSamsaraAction() {
   revalidatePath("/fleet");
   revalidatePath("/setup");
 }
+
+export type FleetImportState = {
+  ok: boolean;
+  mode: "replace" | "merge";
+  imported: number;
+  created: number;
+  updated: number;
+  errors: { row: number; message: string }[];
+  message: string;
+};
+
+export async function importFleetCsvAction(
+  _prev: FleetImportState | null,
+  formData: FormData,
+): Promise<FleetImportState> {
+  const session = await requireDispatcher();
+  const mode = formData.get("mode") === "merge" ? "merge" : "replace";
+  const file = formData.get("file");
+  const pasted = String(formData.get("csvText") ?? "");
+  let text = pasted.trim();
+  if (file instanceof File && file.size > 0) {
+    if (file.size > 512 * 1024) {
+      return {
+        ok: false,
+        mode,
+        imported: 0,
+        created: 0,
+        updated: 0,
+        errors: [{ row: 0, message: "File is larger than 512 KB." }],
+        message: "Fleet was not changed.",
+      };
+    }
+    text = (await file.text()).trim();
+  }
+  if (!text) {
+    return {
+      ok: false,
+      mode,
+      imported: 0,
+      created: 0,
+      updated: 0,
+      errors: [{ row: 0, message: "Upload a CSV file or paste CSV text." }],
+      message: "Fleet was not changed.",
+    };
+  }
+
+  const { parseFleetCsv, parsedRowToTruck } = await import("@/lib/fleet-csv");
+  const parsed = parseFleetCsv(text);
+  if (parsed.rows.length === 0) {
+    return {
+      ok: false,
+      mode,
+      imported: 0,
+      created: 0,
+      updated: 0,
+      errors: parsed.errors,
+      message: "No valid rows — the live fleet was left unchanged.",
+    };
+  }
+
+  const trucks = parsed.rows.map((row) => parsedRowToTruck(row));
+  let created = trucks.length;
+  let updated = 0;
+  if (mode === "replace") {
+    store.replaceTrucks(trucks);
+  } else {
+    const result = store.mergeTrucks(trucks);
+    created = result.created;
+    updated = result.updated;
+  }
+
+  store.addAudit({
+    kind: "FLEET_IMPORT",
+    actorId: session.user.id,
+    message: `${session.user.name} ${mode === "replace" ? "replaced" : "merged"} the fleet from CSV (${trucks.length} valid truck${trucks.length === 1 ? "" : "s"}${parsed.errors.length ? `, ${parsed.errors.length} row error(s)` : ""}).`,
+    metaJson: JSON.stringify({ mode, imported: trucks.length, errors: parsed.errors.length }),
+  });
+
+  revalidatePath("/fleet");
+  revalidatePath("/board");
+  revalidatePath("/audit");
+
+  return {
+    ok: true,
+    mode,
+    imported: trucks.length,
+    created,
+    updated,
+    errors: parsed.errors,
+    message:
+      mode === "replace"
+        ? `Replaced live fleet with ${trucks.length} truck${trucks.length === 1 ? "" : "s"}. Matching uses this set now.`
+        : `Merged ${created} new and ${updated} updated truck${created + updated === 1 ? "" : "s"}. Matching uses the live fleet now.`,
+  };
+}

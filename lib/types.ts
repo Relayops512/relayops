@@ -3,7 +3,13 @@ export type TrailerType = "DRY_VAN" | "REEFER" | "FLATBED";
 export type LoadStatus = "OPEN" | "ASSIGNED" | "COMPLETED";
 export type TruckReadiness = "LEGAL_NOW" | "HOS_BLOCKED" | "ON_LOAD" | "MAINTENANCE";
 export type LoadPriority = "STANDARD" | "HIGH";
-export type AuditKind = "ASSIGNMENT" | "OVERRIDE" | "LOAD_CREATED" | "SAMSARA_SYNC" | "POLICY_FLAG";
+export type AuditKind =
+  | "ASSIGNMENT"
+  | "OVERRIDE"
+  | "LOAD_CREATED"
+  | "SAMSARA_SYNC"
+  | "POLICY_FLAG"
+  | "FLEET_IMPORT";
 
 export type User = {
   id: string;
@@ -29,6 +35,7 @@ export type Truck = {
   weeklyLoadCount: number;
   fuelGallons: number;
   lastPingAt: Date;
+  locationKnown: boolean;
 };
 
 export type Load = {
