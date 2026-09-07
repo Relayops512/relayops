@@ -1,0 +1,54 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg: #f4efe6;
+  --ink: #1f1a16;
+  --teal: #01696f;
+}
+
+html,
+body {
+  background: var(--bg);
+  color: var(--ink);
+}
+
+body {
+  min-height: 100vh;
+}
+
+input,
+select,
+textarea,
+button {
+  font: inherit;
+}
+
+.card {
+  @apply rounded-2xl border border-line bg-white shadow-card;
+}
+
+.chip {
+  @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium;
+}
+
+.btn {
+  @apply inline-flex items-center justify-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition;
+}
+
+.btn-primary {
+  @apply btn bg-teal text-white hover:bg-teal-dark disabled:cursor-not-allowed disabled:opacity-50;
+}
+
+.btn-ghost {
+  @apply btn border border-ink/15 bg-white text-ink hover:bg-cream-soft;
+}
+
+.field {
+  @apply w-full rounded-xl border border-line bg-cream-soft px-3 py-2.5 text-sm outline-none ring-teal/30 focus:border-teal focus:ring-2;
+}
+
+.label {
+  @apply mb-1 block text-xs font-semibold uppercase tracking-wide text-ink-muted;
+}

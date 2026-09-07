@@ -1,0 +1,144 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  DISPATCHER
+  VIEWER
+}
+
+enum TrailerType {
+  DRY_VAN
+  REEFER
+  FLATBED
+}
+
+enum LoadStatus {
+  OPEN
+  ASSIGNED
+  COMPLETED
+}
+
+enum TruckReadiness {
+  LEGAL_NOW
+  HOS_BLOCKED
+  ON_LOAD
+  MAINTENANCE
+}
+
+enum LoadPriority {
+  STANDARD
+  HIGH
+}
+
+enum AuditKind {
+  ASSIGNMENT
+  OVERRIDE
+  LOAD_CREATED
+  SAMSARA_SYNC
+  POLICY_FLAG
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  name         String
+  role         Role     @default(DISPATCHER)
+  createdAt    DateTime @default(now())
+
+  assignments Assignment[]
+  auditEvents AuditEvent[]
+}
+
+model Truck {
+  id              String         @id @default(cuid())
+  unitNumber      String         @unique
+  driverName      String
+  lat             Float
+  lng             Float
+  city            String
+  state           String
+  hosDriveMinutes Int
+  hosDutyMinutes  Int
+  trailerType     TrailerType
+  mpg             Float
+  readiness       TruckReadiness
+  weeklyLoadCount Int            @default(0)
+  fuelGallons     Float          @default(80)
+  lastPingAt      DateTime       @default(now())
+
+  assignments Assignment[]
+}
+
+model Load {
+  id                 String       @id @default(cuid())
+  reference          String       @unique
+  customer           String
+  pickupCity         String
+  pickupState        String
+  pickupLat          Float
+  pickupLng          Float
+  pickupWindowStart  DateTime
+  pickupWindowEnd    DateTime
+  deliveryCity       String
+  deliveryState      String
+  deliveryLat        Float
+  deliveryLng        Float
+  deliveryWindowStart DateTime
+  deliveryWindowEnd  DateTime
+  trailerType        TrailerType
+  weightLbs          Int
+  notes              String       @default("")
+  priority           LoadPriority @default(STANDARD)
+  status             LoadStatus   @default(OPEN)
+  source             String       @default("manual")
+  createdAt          DateTime     @default(now())
+
+  assignments Assignment[]
+}
+
+model Assignment {
+  id             String   @id @default(cuid())
+  loadId         String
+  truckId        String
+  assignedById   String
+  score          Float
+  reasonsJson    String
+  isOverride     Boolean  @default(false)
+  overrideReason String?
+  topTruckId     String?
+  createdAt      DateTime @default(now())
+
+  load       Load @relation(fields: [loadId], references: [id], onDelete: Cascade)
+  truck      Truck @relation(fields: [truckId], references: [id], onDelete: Cascade)
+  assignedBy User  @relation(fields: [assignedById], references: [id])
+}
+
+model AuditEvent {
+  id        String    @id @default(cuid())
+  kind      AuditKind
+  actorId   String?
+  message   String
+  metaJson  String    @default("{}")
+  createdAt DateTime  @default(now())
+
+  actor User? @relation(fields: [actorId], references: [id])
+}
+
+model IntegrationSetting {
+  id           String   @id @default("samsara")
+  provider     String   @default("samsara")
+  enabled      Boolean  @default(false)
+  demoMode     Boolean  @default(true)
+  orgId        String   @default("")
+  apiTokenHint String   @default("")
+  lastSyncAt   DateTime?
+  notes        String   @default("")
+  updatedAt    DateTime @updatedAt
+}

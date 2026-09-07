@@ -1,3 +1,98 @@
 # RelayOps
 
-Truck dispatch pilot — closest/best available truck matching for loads.
+**Dispatch without favorites.** RelayOps is a company-pilot web app that assigns incoming truck loads to the closest / best available trucks using rules — not seniority or dispatcher habit.
+
+Dispatchers get a board of open loads, a scored truck list (HOS, deadhead, fuel, ETA, trailer fit, fairness), assign or override (override reason required), fleet readiness, and a fairness audit. Samsara is stubbed as the first future ELD connector. The pilot runs on **demo fleet data** — no live API keys required.
+
+## Demo login
+
+| Role | Email | Password | Access |
+| --- | --- | --- | --- |
+| Dispatcher | `dispatcher@relayops.demo` | `RelayOps2026!` | Full — create loads, assign, override, sync settings |
+| Viewer | `viewer@relayops.demo` | `Viewer2026!` | Read-only |
+
+A second dispatcher (`jordan@relayops.demo` / same password) exists so the audit screen can show two override rates.
+
+The UI shows a **Demo data** badge. Seeded data includes 22 trucks (including Truck 184 / Marcus Hill) and 15 loads across Midwest / South lanes.
+
+## Local run
+
+Requires Node 20+ and npm.
+
+```bash
+cp .env.example .env
+npm install
+npm run dev
+```
+
+Open [http://localhost:3000](http://localhost:3000). `npm run dev` generates the Prisma client, creates the SQLite database, and seeds demo data if the database is empty.
+
+Useful commands:
+
+```bash
+npm run db:reset   # wipe and reseed
+npm test           # matching + distance unit tests
+npm run build      # production build
+```
+
+## What the matching engine scores
+
+Each open load is ranked against the live truck pool from **seed / database fields** (nothing is hardcoded to a single winner):
+
+| Factor | What it uses |
+| --- | --- |
+| HOS remaining | Drive and duty minutes vs estimated trip time |
+| Deadhead | Haversine miles from truck GPS to pickup |
+| Fuel | `(deadhead + loaded miles) / MPG × diesel` |
+| ETA | Can the truck make the pickup window at 55 mph |
+| Trailer fit | Dry van / reefer / flatbed must match |
+| Fairness | Weekly load count vs fleet average |
+
+Legal-now + trailer match + enough HOS is **eligible**. Picking anyone else is an **override** and requires a written reason, which is written to the fairness audit.
+
+## Company pilot deploy (shareable URL)
+
+### Vercel (fastest public URL)
+
+1. Push this repo to GitHub.
+2. Import the project at [vercel.com/new](https://vercel.com/new).
+3. Set environment variables:
+   - `AUTH_SECRET` — `openssl rand -base64 32`
+   - `AUTH_URL` — `https://<your-app>.vercel.app`
+   - `DATABASE_URL` — `file:./dev.db`
+4. Deploy. Share the URL plus the demo dispatcher account.
+
+**SQLite note:** Vercel’s filesystem is ephemeral. The build seeds a demo database so the first visit works. Writes (new loads, assignments) may reset on a new serverless instance. That is fine for a click-through demo. For a week-long company pilot with real dispatcher traffic, use Postgres (below).
+
+### Persistent pilot (recommended for a real fleet test)
+
+Use [Neon](https://neon.tech), [Vercel Postgres](https://vercel.com/storage/postgres), or [Railway](https://railway.app):
+
+1. Create a Postgres database and copy the connection string.
+2. In `prisma/schema.prisma`, change `provider = "sqlite"` to `provider = "postgresql"`.
+3. Set `DATABASE_URL` to the Postgres URL and `AUTH_SECRET` / `AUTH_URL` as above.
+4. Run `npx prisma db push && npx tsx prisma/seed.ts` against that database (or keep the Vercel build command).
+
+Railway / Render / Fly.io can also run `npm run build && npm start` with the SQLite file on a persistent volume.
+
+### Environment variables
+
+See `.env.example`.
+
+| Name | Required | Purpose |
+| --- | --- | --- |
+| `DATABASE_URL` | yes | Prisma connection (`file:./dev.db` locally) |
+| `AUTH_SECRET` | yes in production | Session signing key |
+| `AUTH_URL` | recommended | Canonical app URL for Auth.js |
+
+## Product map
+
+- **Board** — KPIs + open loads. Select a load for ranked trucks.
+- **Load** — New load intake (pickup/delivery, windows, trailer, weight, notes). TMS import is stubbed.
+- **Fleet** — Filter available vs not. Location, HOS, equipment, readiness.
+- **Audit** — Overrides, load imbalance, policy flags (override rate &gt; 10%).
+- **Setup** — Samsara placeholder config (demo mode on). Motive and Geotab marked later.
+
+## Stack
+
+Next.js App Router, TypeScript, Tailwind CSS, Prisma + SQLite, Auth.js (credentials / JWT). Roles: `DISPATCHER` and `VIEWER`.
