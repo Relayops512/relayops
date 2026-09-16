@@ -1,5 +1,6 @@
-import { PrismaClient, TrailerType, TruckReadiness, LoadPriority } from "@prisma/client";
+import { PrismaClient, TruckReadiness, LoadPriority } from "@prisma/client";
 import bcrypt from "bcryptjs";
+import type { TrailerType } from "../lib/equipment";
 
 const prisma = new PrismaClient();
 
