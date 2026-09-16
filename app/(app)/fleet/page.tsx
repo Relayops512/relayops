@@ -2,7 +2,7 @@ import { auth, isDispatcher } from "@/lib/auth";
 import { store } from "@/lib/store";
 import { AppHeader } from "@/components/AppHeader";
 import { formatMinutes } from "@/lib/geo";
-import { trailerLabel } from "@/lib/matching";
+import { formatEquipment } from "@/lib/matching";
 import { FleetCsvUpload } from "@/components/FleetCsvUpload";
 import { AddTruckForm } from "@/components/AddTruckForm";
 import { EmptyState } from "@/components/EmptyState";
@@ -109,7 +109,7 @@ export default async function FleetPage({
                         {" · "}
                         {formatMinutes(truck.hosDriveMinutes)} drive left
                         {" · "}
-                        {trailerLabel(truck.trailerType)}
+                        {formatEquipment(truck.trailerType, truck.hazmat)}
                         {settings.fairnessToolsEnabled
                           ? ` · ${truck.weeklyLoadCount} load${truck.weeklyLoadCount === 1 ? "" : "s"} this week`
                           : ""}

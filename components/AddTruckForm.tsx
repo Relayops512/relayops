@@ -3,6 +3,7 @@
 import { useActionState } from "react";
 import { CITIES } from "@/lib/cities";
 import { addTruckAction, type AddTruckState } from "@/lib/actions";
+import { HazmatSelect, TrailerTypeSelect } from "./EquipmentFields";
 
 const INITIAL: AddTruckState = { ok: false, message: "" };
 
@@ -44,11 +45,13 @@ export function AddTruckForm({ compact = false }: { compact?: boolean }) {
           <label className="label" htmlFor={`${prefix}trailerType`}>
             Trailer
           </label>
-          <select id={`${prefix}trailerType`} name="trailerType" className="field" defaultValue="DRY_VAN">
-            <option value="DRY_VAN">Dry van</option>
-            <option value="REEFER">Reefer</option>
-            <option value="FLATBED">Flatbed</option>
-          </select>
+          <TrailerTypeSelect id={`${prefix}trailerType`} name="trailerType" />
+        </div>
+        <div>
+          <label className="label" htmlFor={`${prefix}hazmat`}>
+            Hazmat / product
+          </label>
+          <HazmatSelect id={`${prefix}hazmat`} name="hazmat" />
         </div>
       </div>
       <button type="submit" className="btn-primary" disabled={pending}>

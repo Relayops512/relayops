@@ -105,4 +105,21 @@ describe("today urgency", () => {
       assert.equal(item.best.eligible, true);
     }
   });
+
+  it("covers tanker and softshell demo freight with matching equipment", () => {
+    const state = createDemoState();
+    const propane = state.loads.find((l) => l.reference === "RO-4482");
+    const ammonia = state.loads.find((l) => l.reference === "RO-4488");
+    const ng = state.loads.find((l) => l.reference === "RO-4491");
+    assert.ok(propane && ammonia && ng);
+    const propaneItem = buildTodayItem(propane, state.trucks, now);
+    const ammoniaItem = buildTodayItem(ammonia, state.trucks, now);
+    const ngItem = buildTodayItem(ng, state.trucks, now);
+    assert.equal(propaneItem.best?.unitNumber, "301");
+    assert.match(propaneItem.best?.why ?? "", /tanker · 1057/);
+    assert.equal(ammoniaItem.best?.unitNumber, "308");
+    assert.match(ammoniaItem.best?.why ?? "", /tanker · 1005/);
+    assert.equal(ngItem.best?.unitNumber, "312");
+    assert.match(ngItem.trailer, /Softshell/);
+  });
 });

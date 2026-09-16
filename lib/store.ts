@@ -99,6 +99,7 @@ export const store = {
     deliveryWindowStart: Date;
     deliveryWindowEnd: Date;
     trailerType: TrailerType;
+    hazmat?: string;
     weightLbs: number;
     notes: string;
     priority: LoadPriority;
@@ -107,6 +108,7 @@ export const store = {
     const load: Load = {
       id: nid("load"),
       ...input,
+      hazmat: input.hazmat ?? "NONE",
       source: "manual",
       status: "OPEN",
       createdAt: new Date(),

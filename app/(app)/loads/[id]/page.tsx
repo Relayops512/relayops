@@ -7,7 +7,7 @@ import { AssignPanel, type AssignMatch } from "@/components/AssignPanel";
 import { EmptyState } from "@/components/EmptyState";
 import { cityState, formatWeight, formatWindow, formatWhen } from "@/lib/format";
 import { formatMiles } from "@/lib/geo";
-import { matchWhyLine, trailerLabel } from "@/lib/matching";
+import { matchWhyLine, formatEquipment } from "@/lib/matching";
 
 export default async function LoadDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -46,7 +46,7 @@ export default async function LoadDetailPage({ params }: { params: Promise<{ id:
             {load.status === "OPEN" ? "Needs cover" : "Covered"}
           </span>
           {load.priority === "HIGH" ? <span className="chip bg-peach text-peach-text">Soon</span> : null}
-          <span className="chip bg-cream text-ink-muted">{trailerLabel(load.trailerType)}</span>
+          <span className="chip bg-cream text-ink-muted">{formatEquipment(load.trailerType, load.hazmat)}</span>
         </div>
         <dl className="mt-5 grid gap-4 text-sm sm:grid-cols-2">
           <div>

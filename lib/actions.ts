@@ -9,9 +9,14 @@ import { rankTrucks } from "@/lib/matching";
 import type { LoadPriority, TrailerType } from "@/lib/types";
 import { CITIES } from "@/lib/cities";
 import { setOnboardingCookie } from "@/lib/onboarding";
+import { HAZMAT_NONE, TRAILER_TYPES, normalizeHazmat } from "@/lib/equipment";
 
-const trailerEnum = z.enum(["DRY_VAN", "REEFER", "FLATBED"]);
+const trailerEnum = z.enum(TRAILER_TYPES);
 const priorityEnum = z.enum(["STANDARD", "HIGH"]);
+const hazmatEnum = z
+  .string()
+  .optional()
+  .transform((value) => normalizeHazmat(value ?? HAZMAT_NONE));
 
 async function requireDispatcher() {
   const session = await auth();
@@ -37,6 +42,7 @@ const loadSchema = z.object({
   deliveryWindowStart: z.string(),
   deliveryWindowEnd: z.string(),
   trailerType: trailerEnum,
+  hazmat: hazmatEnum,
   weightLbs: z.coerce.number().int().positive(),
   notes: z.string().optional().default(""),
   priority: priorityEnum.optional().default("STANDARD"),
@@ -64,6 +70,7 @@ export async function createLoadAction(formData: FormData) {
     deliveryWindowStart: formData.get("deliveryWindowStart"),
     deliveryWindowEnd: formData.get("deliveryWindowEnd"),
     trailerType: formData.get("trailerType"),
+    hazmat: String(formData.get("hazmat") ?? HAZMAT_NONE),
     weightLbs: formData.get("weightLbs"),
     notes: formData.get("notes") ?? "",
     priority: formData.get("priority") || "STANDARD",
@@ -85,6 +92,7 @@ export async function createLoadAction(formData: FormData) {
     deliveryWindowStart: new Date(parsed.deliveryWindowStart),
     deliveryWindowEnd: new Date(parsed.deliveryWindowEnd),
     trailerType: parsed.trailerType as TrailerType,
+    hazmat: parsed.hazmat,
     weightLbs: parsed.weightLbs,
     notes: parsed.notes,
     priority: parsed.priority as LoadPriority,
@@ -300,6 +308,7 @@ const addTruckSchema = z.object({
   driverName: z.string().trim().min(2).max(80),
   cityKey: z.string().min(3),
   trailerType: trailerEnum,
+  hazmat: hazmatEnum,
 });
 
 export async function addTruckAction(
@@ -312,6 +321,7 @@ export async function addTruckAction(
     driverName: formData.get("driverName"),
     cityKey: formData.get("cityKey"),
     trailerType: formData.get("trailerType"),
+    hazmat: String(formData.get("hazmat") ?? HAZMAT_NONE),
   });
   if (!parsed.success) {
     return { ok: false, message: "Add a truck number, driver, and city." };
@@ -331,6 +341,7 @@ export async function addTruckAction(
     hosDriveMinutes: 480,
     hosDutyMinutes: 600,
     trailerType: parsed.data.trailerType,
+    hazmat: parsed.data.hazmat,
     mpg: 7.2,
     readiness: "LEGAL_NOW",
     weeklyLoadCount: 0,
@@ -367,6 +378,7 @@ export async function createSampleLoadAction(): Promise<{ ok: boolean; loadId?: 
     deliveryWindowStart: new Date(Date.now() + 18 * 3600 * 1000),
     deliveryWindowEnd: new Date(Date.now() + 28 * 3600 * 1000),
     trailerType: "DRY_VAN",
+    hazmat: HAZMAT_NONE,
     weightLbs: 36500,
     notes: "Sample load to try covering.",
     priority: "STANDARD",

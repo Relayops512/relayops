@@ -1,4 +1,5 @@
 import type { TrailerType, Truck, TruckReadiness } from "./types";
+import { HAZMAT_NONE, normalizeHazmat, parseHazmat, parseTrailerType } from "./equipment";
 
 export type CsvRowError = { row: number; message: string };
 
@@ -6,6 +7,7 @@ export type ParsedFleetRow = {
   unitNumber: string;
   driverName: string;
   trailerType: TrailerType;
+  hazmat: string;
   lat: number;
   lng: number;
   city: string;
@@ -23,11 +25,12 @@ export type ParseFleetResult = {
   errors: CsvRowError[];
 };
 
-export const FLEET_CSV_TEMPLATE = `truckNumber,driverName,trailerType,lat,lng,hosDriveMinutesRemaining,hosDutyMinutesRemaining,mpg,status,weeklyLoadCount
-184,Marcus Hill,dry_van,39.7684,-86.1581,525,605,7.6,available,2
-191,Elena Ruiz,dry_van,38.2527,-85.7585,480,590,7.2,available,1
-203,Priya Shah,reefer,,,390,510,6.9,available,0
-158,Owen Blake,flatbed,38.627,-90.1994,540,640,6.4,unavailable,3
+export const FLEET_CSV_TEMPLATE = `truckNumber,driverName,trailerType,hazmat,lat,lng,hosDriveMinutesRemaining,hosDutyMinutesRemaining,mpg,status,weeklyLoadCount
+184,Marcus Hill,dry_van,none,39.7684,-86.1581,525,605,7.6,available,2
+191,Elena Ruiz,dry_van,none,38.2527,-85.7585,480,590,7.2,available,1
+203,Priya Shah,reefer,none,,,390,510,6.9,available,0
+301,Tanner Cole,tanker,1057,29.7604,-95.3698,510,620,6.1,available,1
+312,Drew Hale,softshell_ng,none,32.7767,-96.797,490,600,6.0,available,0
 `;
 
 const HEADER_ALIASES: Record<string, keyof ParsedFleetRow | "status"> = {
@@ -47,6 +50,12 @@ const HEADER_ALIASES: Record<string, keyof ParsedFleetRow | "status"> = {
   trailer_type: "trailerType",
   trailer: "trailerType",
   equipment: "trailerType",
+  hazmat: "hazmat",
+  placard: "hazmat",
+  unnumber: "hazmat",
+  un_number: "hazmat",
+  un: "hazmat",
+  product: "hazmat",
   lat: "lat",
   latitude: "lat",
   lng: "lng",
@@ -114,13 +123,7 @@ export function parseCsvLine(line: string): string[] {
 }
 
 function parseTrailer(value: string): TrailerType | null {
-  const v = value.trim().toLowerCase().replace(/[\s-]+/g, "_");
-  if (!v) return null;
-  if (["dry_van", "dryvan", "van", "dry"].includes(v)) return "DRY_VAN";
-  if (["reefer", "refrigerated", "refigerated"].includes(v)) return "REEFER";
-  if (["flatbed", "flat_bed", "flat"].includes(v)) return "FLATBED";
-  if (v === "dry_van" || v === "reefer" || v === "flatbed") return v.toUpperCase() as TrailerType;
-  return null;
+  return parseTrailerType(value);
 }
 
 function parseReadiness(value: string): TruckReadiness | null {
@@ -190,8 +193,19 @@ export function parseFleetCsv(text: string): ParseFleetResult {
     let trailerType: TrailerType = "DRY_VAN";
     if (trailerRaw) {
       const parsed = parseTrailer(trailerRaw);
-      if (!parsed) rowErrors.push(`Unknown trailerType "${trailerRaw}" (use dry_van, reefer, or flatbed)`);
-      else trailerType = parsed;
+      if (!parsed) {
+        rowErrors.push(
+          `Unknown trailerType "${trailerRaw}" (use dry_van, reefer, tanker, softshell_ng, softshell_asphalt, …)`,
+        );
+      } else trailerType = parsed;
+    }
+
+    const hazmatRaw = get("hazmat");
+    let hazmat = HAZMAT_NONE;
+    if (hazmatRaw) {
+      const parsed = parseHazmat(hazmatRaw);
+      if (!parsed) rowErrors.push(`Unknown hazmat "${hazmatRaw}" (use none, 1057, 1005, or a UN number)`);
+      else hazmat = parsed;
     }
 
     const lat = parseNumber(get("lat"));
@@ -243,6 +257,7 @@ export function parseFleetCsv(text: string): ParseFleetResult {
       unitNumber,
       driverName,
       trailerType,
+      hazmat,
       lat: locationKnown ? lat! : 0,
       lng: locationKnown ? lng! : 0,
       city: get("city") || (locationKnown ? "GPS" : "Unknown"),
@@ -275,6 +290,7 @@ export function parsedRowToTruck(row: ParsedFleetRow, existingId?: string): Truc
     hosDriveMinutes: row.hosDriveMinutes,
     hosDutyMinutes: row.hosDutyMinutes,
     trailerType: row.trailerType,
+    hazmat: normalizeHazmat(row.hazmat),
     mpg: row.mpg,
     readiness: row.readiness,
     weeklyLoadCount: row.weeklyLoadCount,
