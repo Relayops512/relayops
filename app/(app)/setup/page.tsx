@@ -3,36 +3,35 @@ import { store } from "@/lib/store";
 import { AppHeader } from "@/components/AppHeader";
 import { saveSamsaraSettingsAction } from "@/lib/actions";
 import { formatWhen } from "@/lib/format";
-import { FleetCsvUpload } from "@/components/FleetCsvUpload";
+import { FairnessToggle } from "@/components/FairnessToggle";
+import Link from "next/link";
 
 export default async function SetupPage() {
   const session = await auth();
   const canWrite = isDispatcher(session?.user.role);
   const setting = store.getIntegration();
+  const settings = store.getSettings();
 
   return (
     <div>
       <AppHeader
-        title="Integrations"
-        subtitle="Samsara is the first ELD/telematics connector. Motive and Geotab come next."
-        canWrite={canWrite}
+        title="Setup"
+        subtitle="Connect telematics later. Fairness tools stay out of the way unless you want them."
+        demo={settings.fleetIsDemo}
       />
 
-      <FleetCsvUpload canWrite={canWrite} />
-
-      <section className="card p-5">
-        <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+      <section className="card p-6">
+        <div className="mb-5 flex flex-wrap items-center justify-between gap-2">
           <div>
             <h2 className="text-lg font-semibold">Samsara</h2>
-            <p className="text-sm text-ink-muted">
-              Primary future connector for truck location, HOS, and equipment. This pilot does not
-              require live API keys.
+            <p className="mt-1 text-sm leading-relaxed text-ink-muted">
+              Optional later for live GPS and HOS. This pilot runs on the trucks you add here.
             </p>
           </div>
-          <span className="chip bg-teal-soft text-teal">Demo mode</span>
+          <span className="chip bg-teal-soft text-teal">Demo</span>
         </div>
 
-        <form action={saveSamsaraSettingsAction} className="space-y-4">
+        <form action={saveSamsaraSettingsAction} className="space-y-5">
           <label className="flex items-center gap-2 text-sm">
             <input
               type="checkbox"
@@ -41,7 +40,7 @@ export default async function SetupPage() {
               disabled={!canWrite}
               className="accent-teal"
             />
-            Enable live connector when keys are available
+            Enable when keys are available
           </label>
           <label className="flex items-center gap-2 text-sm">
             <input
@@ -51,7 +50,7 @@ export default async function SetupPage() {
               disabled={!canWrite}
               className="accent-teal"
             />
-            Use demo fleet data (recommended for company pilot)
+            Use sample fleet data
           </label>
           <div>
             <label className="label" htmlFor="orgId">
@@ -67,14 +66,14 @@ export default async function SetupPage() {
           </div>
           <div>
             <label className="label" htmlFor="apiToken">
-              API token (optional — never required for this pilot)
+              API token
             </label>
             <input
               id="apiToken"
               name="apiToken"
               type="password"
               className="field"
-              placeholder={setting?.apiTokenHint || "Paste a token later — demo data still works"}
+              placeholder={setting?.apiTokenHint || "Not needed for this pilot"}
               disabled={!canWrite}
             />
           </div>
@@ -83,30 +82,47 @@ export default async function SetupPage() {
           </p>
           {canWrite ? (
             <button type="submit" className="btn-primary">
-              Save connector settings
+              Save
             </button>
           ) : (
-            <p className="text-sm text-ink-muted">Viewer accounts cannot change integrations.</p>
+            <p className="text-sm text-ink-muted">Viewer accounts cannot change setup.</p>
           )}
         </form>
       </section>
 
       <section className="mt-4 grid gap-3 md:grid-cols-2">
-        <article className="card p-5 opacity-90">
+        <article className="card p-6">
           <h3 className="font-semibold">Motive</h3>
-          <p className="mt-1 text-sm text-ink-muted">
-            Planned next. Same HOS + location contract as Samsara so matching does not change.
-          </p>
-          <span className="chip mt-3 bg-cream text-ink-muted">Later</span>
+          <p className="mt-2 text-sm leading-relaxed text-ink-muted">Same location and HOS fields, later.</p>
         </article>
-        <article className="card p-5 opacity-90">
+        <article className="card p-6">
           <h3 className="font-semibold">Geotab</h3>
-          <p className="mt-1 text-sm text-ink-muted">
-            Planned for mixed fleets. Fuel and engine data will feed the fuel-estimate score.
-          </p>
-          <span className="chip mt-3 bg-cream text-ink-muted">Later</span>
+          <p className="mt-2 text-sm leading-relaxed text-ink-muted">For mixed fleets, later.</p>
         </article>
       </section>
+
+      <details className="card mt-10 p-6">
+        <summary className="cursor-pointer text-lg font-semibold tracking-tight">Advanced</summary>
+        <div className="mt-5 space-y-5">
+          <p className="text-sm leading-relaxed text-ink-muted">
+            Extra tools for fleets that want them. Most dispatchers can ignore this.
+          </p>
+          {canWrite ? (
+            <FairnessToggle enabled={settings.fairnessToolsEnabled} />
+          ) : (
+            <p className="text-sm text-ink-muted">
+              Fairness tools are {settings.fairnessToolsEnabled ? "on" : "off"}.
+            </p>
+          )}
+          {settings.fairnessToolsEnabled ? (
+            <p className="text-sm">
+              <Link href="/audit" className="font-semibold text-teal">
+                Open fairness tools
+              </Link>
+            </p>
+          ) : null}
+        </div>
+      </details>
     </div>
-    );
+  );
 }

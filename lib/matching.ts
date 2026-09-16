@@ -207,9 +207,9 @@ export function scoreTruck(
     tone: fuelCostUsd < 180 ? "good" : fuelCostUsd < 320 ? "neutral" : "warn",
   });
   if (truck.weeklyLoadCount <= fleetAvgWeekly - 1) {
-    reasons.push({ label: "Below weekly average", tone: "good" });
+    reasons.push({ label: "Lighter week so far", tone: "good" });
   } else if (truck.weeklyLoadCount >= fleetAvgWeekly + 2) {
-    reasons.push({ label: "Heavy week — fairness", tone: "warn" });
+    reasons.push({ label: "Already busy this week", tone: "warn" });
   }
 
   return {
@@ -234,6 +234,42 @@ function formatDrive(minutes: number): string {
   const h = Math.floor(minutes / 60);
   const m = minutes % 60;
   return `${h}h ${String(m).padStart(2, "0")}m`;
+}
+
+/** One-line dispatcher reason, e.g. "12 mi · 8h HOS · dry van". */
+export function matchWhyLine(match: TruckMatch): string {
+  const hosHours = Math.max(0, Math.round(match.truck.hosDriveMinutes / 60));
+  const trailer = trailerLabel(match.truck.trailerType).toLowerCase();
+  const hos = `${hosHours}h HOS`;
+  if (match.truck.locationKnown === false) {
+    return `location unknown · ${hos} · ${trailer}`;
+  }
+  return `${Math.round(match.deadheadMiles)} mi · ${hos} · ${trailer}`;
+}
+
+const BALANCE_REASON = /lighter week|already busy this week|fairness|weekly average|heavy week/i;
+
+export function displayReasons(reasons: ReasonChip[], fairnessEnabled: boolean): ReasonChip[] {
+  if (fairnessEnabled) return reasons;
+  return reasons.filter((reason) => !BALANCE_REASON.test(reason.label));
+}
+
+export const BREAKDOWN_LABELS: Record<keyof ScoreBreakdown, string> = {
+  hos: "Hours left",
+  deadhead: "Empty miles",
+  fuel: "Fuel",
+  eta: "On time",
+  trailer: "Trailer",
+  fairness: "Balance",
+};
+
+export function displayBreakdown(
+  breakdown: ScoreBreakdown,
+  fairnessEnabled: boolean,
+): Partial<ScoreBreakdown> {
+  if (fairnessEnabled) return breakdown;
+  const { fairness: _fairness, ...rest } = breakdown;
+  return rest;
 }
 
 export function trailerLabel(type: TrailerType): string {

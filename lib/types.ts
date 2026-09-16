@@ -96,6 +96,12 @@ export type IntegrationSetting = {
   notes: string;
 };
 
+export type AppSettings = {
+  fairnessToolsEnabled: boolean;
+  fleetIsDemo: boolean;
+  onboardedUserIds: string[];
+};
+
 export type AssignmentWithRels = Assignment & {
   load: Load;
   truck: Truck;

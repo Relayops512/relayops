@@ -13,7 +13,6 @@ function localInputValue(hoursFromNow: number): string {
 export function NewLoadForm() {
   const [pickupKey, setPickupKey] = useState("Indianapolis|IN");
   const [dropKey, setDropKey] = useState("Chicago|IL");
-  const [tmsNote, setTmsNote] = useState(false);
 
   const pickup = useMemo(
     () => CITIES.find((c) => `${c.city}|${c.state}` === pickupKey) ?? CITIES[1],
@@ -25,23 +24,10 @@ export function NewLoadForm() {
   );
 
   return (
-    <form action={createLoadAction} className="card space-y-4 p-5">
+    <form action={createLoadAction} className="card space-y-6 p-6 sm:p-8">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <p className="text-sm text-ink-muted">Manual intake for the pilot. TMS import is stubbed.</p>
-        <button
-          type="button"
-          className="btn-ghost"
-          onClick={() => setTmsNote(true)}
-        >
-          Import from TMS
-        </button>
+        <p className="text-sm text-ink-muted">Enter the freight. Import from a TMS comes later.</p>
       </div>
-      {tmsNote ? (
-        <p className="rounded-xl bg-teal-mist px-3 py-2 text-sm text-teal">
-          McLeod / TMW import is not connected in this pilot. Enter the load manually — it persists in
-          the database.
-        </p>
-      ) : null}
 
       <div>
         <label className="label" htmlFor="customer">
@@ -186,7 +172,7 @@ export function NewLoadForm() {
       </div>
 
       <button type="submit" className="btn-primary">
-        Save load and rank trucks
+        Save load
       </button>
     </form>
   );

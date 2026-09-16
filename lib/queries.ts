@@ -1,10 +1,12 @@
 import { store } from "@/lib/store";
 import { estimateDeadhead, rankTrucks } from "@/lib/matching";
+import { buildTodayItem } from "@/lib/today";
 
 export async function getDashboard() {
   const loads = store.listOpenLoads();
   const trucks = store.listTrucks();
   const assignments = store.listAssignments();
+  const settings = store.getSettings();
 
   const legalNow = trucks.filter((t) => t.readiness === "LEGAL_NOW").length;
   const hosBlocked = trucks.filter((t) => t.readiness === "HOS_BLOCKED").length;
@@ -35,9 +37,15 @@ export async function getDashboard() {
   }
   const overPolicy = [...byDispatcher.values()].filter((d) => d.total > 0 && d.overrides / d.total > 0.1);
 
+  const items = loads.map((load) => buildTodayItem(load, trucks));
+  const needCover = items.filter((item) => item.needCover).length;
+
   return {
     loads,
     trucks,
+    items,
+    settings,
+    isDemoFleet: settings.fleetIsDemo,
     kpis: {
       openLoads: loads.length,
       highPriority,
@@ -46,6 +54,7 @@ export async function getDashboard() {
       avgDeadhead,
       overridePct,
       overPolicyCount: overPolicy.length,
+      needCover,
     },
   };
 }
@@ -54,15 +63,17 @@ export async function getLoadWithMatches(id: string) {
   const load = store.getLoad(id);
   const trucks = store.listTrucks();
   const assignment = store.getAssignmentForLoad(id);
+  const settings = store.getSettings();
   if (!load) return null;
   const matches = rankTrucks(load, trucks);
-  return { load, matches, assignment };
+  return { load, matches, assignment, settings };
 }
 
 export async function getAuditData() {
   const events = store.listAuditEvents(40);
   const assignments = store.listAssignments();
   const trucks = [...store.listTrucks()].sort((a, b) => b.weeklyLoadCount - a.weeklyLoadCount);
+  const settings = store.getSettings();
 
   const byDispatcher = new Map<string, { name: string; total: number; overrides: number }>();
   for (const a of assignments) {
@@ -82,5 +93,6 @@ export async function getAuditData() {
     trucks,
     dispatchers: [...byDispatcher.values()],
     avgLoads,
+    settings,
   };
 }

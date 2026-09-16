@@ -1,5 +1,6 @@
 import { createDemoState, type DemoState } from "./demo-data";
 import type {
+  AppSettings,
   Assignment,
   AssignmentWithRels,
   AuditEvent,
@@ -44,8 +45,10 @@ export const store = {
     return state()
       .loads.filter((l) => l.status === "OPEN")
       .sort((a, b) => {
+        const byWindow = a.pickupWindowStart.getTime() - b.pickupWindowStart.getTime();
+        if (byWindow !== 0) return byWindow;
         if (a.priority !== b.priority) return a.priority === "HIGH" ? -1 : 1;
-        return a.pickupWindowStart.getTime() - b.pickupWindowStart.getTime();
+        return a.reference.localeCompare(b.reference);
       });
   },
 
@@ -172,8 +175,47 @@ export const store = {
     state().integration.demoMode = true;
   },
 
+  getSettings(): AppSettings {
+    return state().settings;
+  },
+
+  setFairnessToolsEnabled(enabled: boolean) {
+    state().settings.fairnessToolsEnabled = enabled;
+  },
+
+  markFleetCustom() {
+    state().settings.fleetIsDemo = false;
+  },
+
+  isDemoFleet(): boolean {
+    return state().settings.fleetIsDemo;
+  },
+
+  markOnboarded(userId: string) {
+    const ids = state().settings.onboardedUserIds;
+    if (!ids.includes(userId)) ids.push(userId);
+  },
+
+  isOnboarded(userId: string): boolean {
+    return state().settings.onboardedUserIds.includes(userId);
+  },
+
+  addTruck(truck: Truck) {
+    const s = state();
+    const idx = s.trucks.findIndex(
+      (t) => t.unitNumber.toLowerCase() === truck.unitNumber.toLowerCase(),
+    );
+    if (idx >= 0) {
+      s.trucks[idx] = { ...truck, id: s.trucks[idx].id };
+    } else {
+      s.trucks.push(truck);
+    }
+    s.settings.fleetIsDemo = false;
+  },
+
   replaceTrucks(trucks: Truck[]) {
     state().trucks = trucks;
+    state().settings.fleetIsDemo = false;
   },
 
   mergeTrucks(incoming: Truck[]): { created: number; updated: number } {
@@ -192,6 +234,7 @@ export const store = {
         created += 1;
       }
     }
+    s.settings.fleetIsDemo = false;
     return { created, updated };
   },
 };

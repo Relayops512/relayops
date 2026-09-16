@@ -13,54 +13,70 @@ const INITIAL: FleetImportState = {
   message: "",
 };
 
-export function FleetCsvUpload({ canWrite }: { canWrite: boolean }) {
+export function FleetCsvUpload({
+  canWrite,
+  compact = false,
+}: {
+  canWrite: boolean;
+  compact?: boolean;
+}) {
   const [state, action, pending] = useActionState(importFleetCsvAction, INITIAL);
 
   return (
-    <section className="card mb-4 p-5">
+    <section className={`card p-5 ${compact ? "" : "mb-4"}`}>
       <div className="mb-3 flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h2 className="text-lg font-semibold">Upload fleet CSV</h2>
+          <h2 className="text-lg font-semibold">{compact ? "Or upload a CSV" : "Upload fleet CSV"}</h2>
           <p className="text-sm text-ink-muted">
-            Load your trucks and drivers without Samsara. Valid rows update the live matching pool
-            immediately.
+            {compact
+              ? "Truck number and driver are enough. Matching updates immediately."
+              : "Load trucks and drivers from a spreadsheet. Valid rows update matching immediately."}
           </p>
         </div>
         <a href="/api/fleet/template" className="btn-ghost">
-          Download template
+          Template
         </a>
       </div>
 
-      <dl className="mb-4 grid gap-2 text-xs text-ink-muted sm:grid-cols-2">
-        <div>
-          <dt className="font-semibold text-ink">Required</dt>
-          <dd>truckNumber, driverName</dd>
-        </div>
-        <div>
-          <dt className="font-semibold text-ink">Optional</dt>
-          <dd>trailerType, lat, lng, hosDriveMinutesRemaining, hosDutyMinutesRemaining, mpg, status, weeklyLoadCount</dd>
-        </div>
-      </dl>
-      <p className="mb-4 text-xs text-ink-faint">
-        Aliases work (unit, driver, latitude, available). Missing lat/lng marks location unknown and
-        lowers match quality. On Vercel the uploaded fleet lasts for this serverless instance — a
-        cold start resets to demo trucks. Samsara remains optional for live GPS/HOS later.
-      </p>
+      {compact ? null : (
+        <>
+          <dl className="mb-4 grid gap-2 text-xs text-ink-muted sm:grid-cols-2">
+            <div>
+              <dt className="font-semibold text-ink">Required</dt>
+              <dd>truckNumber, driverName</dd>
+            </div>
+            <div>
+              <dt className="font-semibold text-ink">Optional</dt>
+              <dd>trailerType, lat, lng, hosDriveMinutesRemaining, hosDutyMinutesRemaining, mpg, status</dd>
+            </div>
+          </dl>
+          <p className="mb-4 text-xs text-ink-faint">
+            Missing lat/lng marks location unknown. On Vercel an uploaded fleet lasts for this
+            serverless instance — a cold start resets to demo trucks.
+          </p>
+        </>
+      )}
 
       {canWrite ? (
         <form action={action} className="space-y-3">
           <div>
-            <label className="label" htmlFor="fleet-file">
+            <label className="label" htmlFor={compact ? "onboard-fleet-file" : "fleet-file"}>
               CSV file
             </label>
-            <input id="fleet-file" name="file" type="file" accept=".csv,text/csv" className="field bg-white" />
+            <input
+              id={compact ? "onboard-fleet-file" : "fleet-file"}
+              name="file"
+              type="file"
+              accept=".csv,text/csv"
+              className="field bg-white"
+            />
           </div>
           <div>
-            <label className="label" htmlFor="csvText">
+            <label className="label" htmlFor={compact ? "onboard-csvText" : "csvText"}>
               Or paste CSV
             </label>
             <textarea
-              id="csvText"
+              id={compact ? "onboard-csvText" : "csvText"}
               name="csvText"
               className="field min-h-28 font-mono text-xs"
               placeholder="truckNumber,driverName,trailerType,lat,lng&#10;401,Jamie Cole,dry_van,39.77,-86.16"
