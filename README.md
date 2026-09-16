@@ -2,7 +2,7 @@
 
 RelayOps is a company-pilot web app that covers incoming truck loads with the **best available truck** — closest, legal, and on time.
 
-Dispatchers get a **Today** board of loads that need cover, a plain-English reason for the recommended truck, and one-tap Assign. Fleet CSV upload and a skippable first-run setup are included. Fairness / override-rate tools exist as an **optional Advanced** setting (off by default). Samsara is stubbed as a future ELD connector. The pilot runs on **demo fleet data** — no live API keys required.
+Dispatchers get a **Today** board of loads that need cover, a plain-English reason for the recommended truck, and one-tap Assign. Fleet CSV upload and a skippable first-run setup are included. Fairness / override-rate tools exist as an **optional Advanced** setting (off by default). Samsara is stubbed as a future ELD connector. The pilot runs on **demo fleet data** — no live API keys required. In-app **Help** is a one-page dispatcher quick start (also `/help.md`).
 
 ## Demo login
 
@@ -93,6 +93,7 @@ See `.env.example`.
 - **New load** — Pickup, delivery, windows, trailer, weight.
 - **Fleet** — Ready vs not. Add a few trucks or upload a CSV (replace or merge).
 - **Setup** — Samsara placeholder (demo mode on). **Advanced → Fairness tools** is off by default.
+- **Help** — One-page quick start from the header (or Setup). Printable; markdown at `/help.md`.
 
 First visit (or a still-demo fleet) offers a short, skippable onboarding: add trucks → cover a load → assign.
 

@@ -20,6 +20,18 @@ export default async function SetupPage() {
         demo={settings.fleetIsDemo}
       />
 
+      <section className="card mb-4 p-6">
+        <h2 className="text-lg font-semibold">Quick start</h2>
+        <p className="mt-1 text-sm leading-relaxed text-ink-muted">
+          How to run a day, where things live, and a few tips.
+        </p>
+        <p className="mt-4">
+          <Link href="/help" className="font-semibold text-teal">
+            Open Help
+          </Link>
+        </p>
+      </section>
+
       <section className="card p-6">
         <div className="mb-5 flex flex-wrap items-center justify-between gap-2">
           <div>

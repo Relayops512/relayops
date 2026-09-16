@@ -52,3 +52,14 @@ button {
 .label {
   @apply mb-1.5 block text-sm text-ink-muted;
 }
+
+@media print {
+  body {
+    background: white;
+  }
+
+  .card {
+    break-inside: avoid;
+    box-shadow: none;
+  }
+}
