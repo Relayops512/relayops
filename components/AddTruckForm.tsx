@@ -29,7 +29,7 @@ export function AddTruckForm({ compact = false }: { compact?: boolean }) {
           </label>
           <input id={`${prefix}driverName`} name="driverName" required className="field" placeholder="Jamie Cole" />
         </div>
-        <div>
+        <div className="sm:col-span-2">
           <label className="label" htmlFor={`${prefix}cityKey`}>
             Near
           </label>
