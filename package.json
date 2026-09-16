@@ -12,7 +12,7 @@
     "db:push": "prisma db push",
     "db:seed": "tsx prisma/seed.ts",
     "db:reset": "prisma db push --force-reset && tsx prisma/seed.ts --force",
-    "test": "tsx --test lib/matching.test.ts lib/geo.test.ts lib/fleet-csv.test.ts lib/today.test.ts lib/samsara.test.ts"
+    "test": "tsx --test lib/matching.test.ts lib/geo.test.ts lib/fleet-csv.test.ts lib/today.test.ts lib/help.test.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

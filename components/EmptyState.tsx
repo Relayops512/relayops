@@ -4,7 +4,7 @@ export function EmptyState({
   action,
 }: {
   title: string;
-  body: string;
+  body: React.ReactNode;
   action?: React.ReactNode;
 }) {
   return (
