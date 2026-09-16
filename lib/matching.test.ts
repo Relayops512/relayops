@@ -1,6 +1,6 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
-import { rankTrucks, type MatchLoad, type MatchTruck } from "./matching";
+import { matchWhyLine, rankTrucks, type MatchLoad, type MatchTruck } from "./matching";
 
 const now = new Date("2026-09-08T14:00:00Z");
 
@@ -87,6 +87,60 @@ describe("rankTrucks", () => {
     assert.equal(ranked[0].eligible, true);
     assert.equal(ranked.find((r) => r.truck.id === "mis")?.eligible, false);
     assert.equal(ranked.find((r) => r.truck.id === "blk")?.eligible, false);
+  });
+
+  it("requires an exact hazmat match when the load specifies a placard", () => {
+    const propane = truck({
+      id: "p",
+      unitNumber: "301",
+      driverName: "Tanner Cole",
+      trailerType: "TANKER",
+      hazmat: "UN1057",
+    });
+    const ammonia = truck({
+      id: "a",
+      unitNumber: "308",
+      driverName: "Harper Quinn",
+      trailerType: "TANKER",
+      hazmat: "UN1005",
+    });
+    const plain = truck({
+      id: "t",
+      unitNumber: "310",
+      driverName: "No Placard",
+      trailerType: "TANKER",
+    });
+    const ranked = rankTrucks(load({ trailerType: "TANKER", hazmat: "UN1057" }), [ammonia, plain, propane], now);
+    assert.equal(ranked[0].truck.id, "p");
+    assert.equal(ranked[0].eligible, true);
+    assert.match(ranked[0].reasons.some((r) => /1057/.test(r.label)) ? "ok" : "", /ok/);
+    assert.equal(ranked.find((r) => r.truck.id === "a")?.eligible, false);
+    assert.equal(ranked.find((r) => r.truck.id === "t")?.eligible, false);
+  });
+
+  it("includes trailer and hazmat on the why line", () => {
+    const propane = truck({
+      id: "p",
+      unitNumber: "301",
+      driverName: "Tanner Cole",
+      trailerType: "TANKER",
+      hazmat: "UN1057",
+    });
+    const ranked = rankTrucks(load({ trailerType: "TANKER", hazmat: "UN1057" }), [propane], now);
+    assert.match(matchWhyLine(ranked[0]), /\d+ mi · \d+h HOS · tanker · 1057/);
+  });
+
+  it("lets any matching trailer cover a load that does not require hazmat", () => {
+    const propane = truck({
+      id: "p",
+      unitNumber: "301",
+      driverName: "Tanner Cole",
+      trailerType: "TANKER",
+      hazmat: "UN1057",
+    });
+    const ranked = rankTrucks(load({ trailerType: "TANKER" }), [propane], now);
+    assert.equal(ranked[0].eligible, true);
+    assert.equal(ranked[0].hazmatFit, "not_required");
   });
 
   it("penalizes trucks with unknown location versus a nearby GPS truck", () => {

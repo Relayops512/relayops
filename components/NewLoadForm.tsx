@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { CITIES } from "@/lib/cities";
 import { createLoadAction } from "@/lib/actions";
+import { HazmatSelect, TrailerTypeSelect } from "./EquipmentFields";
 
 function localInputValue(hoursFromNow: number): string {
   const d = new Date(Date.now() + hoursFromNow * 3600 * 1000);
@@ -136,16 +137,18 @@ export function NewLoadForm() {
         </div>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-2">
         <div>
           <label className="label" htmlFor="trailerType">
             Trailer
           </label>
-          <select id="trailerType" name="trailerType" className="field" defaultValue="DRY_VAN">
-            <option value="DRY_VAN">Dry van</option>
-            <option value="REEFER">Reefer</option>
-            <option value="FLATBED">Flatbed</option>
-          </select>
+          <TrailerTypeSelect id="trailerType" name="trailerType" />
+        </div>
+        <div>
+          <label className="label" htmlFor="hazmat">
+            Hazmat / product
+          </label>
+          <HazmatSelect id="hazmat" name="hazmat" />
         </div>
         <div>
           <label className="label" htmlFor="weightLbs">

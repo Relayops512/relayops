@@ -1,5 +1,6 @@
 import { store } from "@/lib/store";
 import { estimateDeadhead, rankTrucks } from "@/lib/matching";
+import { hazmatSatisfied } from "@/lib/equipment";
 import { buildTodayItem } from "@/lib/today";
 
 export async function getDashboard() {
@@ -14,7 +15,12 @@ export async function getDashboard() {
 
   const deadheads: number[] = [];
   for (const load of loads) {
-    const eligible = trucks.filter((t) => t.readiness === "LEGAL_NOW" && t.trailerType === load.trailerType);
+    const eligible = trucks.filter(
+      (t) =>
+        t.readiness === "LEGAL_NOW" &&
+        t.trailerType === load.trailerType &&
+        hazmatSatisfied(load.hazmat, t.hazmat),
+    );
     if (eligible.length === 0) continue;
     const nearest = eligible
       .map((t) => estimateDeadhead(t, load))

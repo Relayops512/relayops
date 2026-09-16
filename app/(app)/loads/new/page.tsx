@@ -12,7 +12,7 @@ export default async function NewLoadPage() {
     <div>
       <AppHeader
         title="New load"
-        subtitle="Lane, appointment, and trailer. We'll show the best truck next."
+        subtitle="Lane, appointment, trailer, and hazmat if the freight needs it."
         demo={demo}
       />
       {canWrite ? (

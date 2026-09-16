@@ -17,6 +17,7 @@ const load: MatchLoad = {
   deliveryLat: 41.8781,
   deliveryLng: -87.6298,
   trailerType: "DRY_VAN",
+  hazmat: "NONE",
   weightLbs: 38000,
 };
 
@@ -30,9 +31,28 @@ describe("parseFleetCsv", () => {
     assert.equal(a.rows.length, 2);
     assert.equal(a.rows[0].unitNumber, "184");
     assert.equal(a.rows[0].trailerType, "DRY_VAN");
+    assert.equal(a.rows[0].hazmat, "NONE");
     assert.equal(b.rows[0].unitNumber, "900");
     assert.equal(b.rows[0].trailerType, "REEFER");
     assert.equal(b.rows[0].locationKnown, true);
+  });
+
+  it("parses tanker, softshell, and hazmat aliases", () => {
+    const csv = `unit,driver,equipment,unNumber,latitude,longitude
+301,Tanner Cole,tanker,1057,29.76,-95.37
+308,Harper Quinn,tank,ammonia,36.15,-95.99
+312,Drew Hale,softshell_ng,none,32.77,-96.79`;
+    const parsed = parseFleetCsv(csv);
+    assert.equal(parsed.errors.length, 0);
+    assert.equal(parsed.rows[0].trailerType, "TANKER");
+    assert.equal(parsed.rows[0].hazmat, "UN1057");
+    assert.equal(parsed.rows[1].hazmat, "UN1005");
+    assert.equal(parsed.rows[2].trailerType, "SOFTSHELL_NG");
+    assert.equal(parsed.rows[2].hazmat, "NONE");
+    const asphalt = parseFleetCsv(`truckNumber,driverName,trailerType,placard
+318,Ivy Nash,softshell_asphalt,none`);
+    assert.equal(asphalt.rows[0].trailerType, "SOFTSHELL_ASPHALT");
+    assert.equal(asphalt.rows[0].hazmat, "NONE");
   });
 
   it("keeps valid rows and reports row errors without requiring a full wipe", () => {

@@ -1,5 +1,5 @@
 import { cityState, formatWindow, needsCoverSoon, relativePickup } from "./format";
-import { matchWhyLine, rankTrucks, trailerLabel, type TruckMatch } from "./matching";
+import { matchWhyLine, rankTrucks, formatEquipment, type TruckMatch } from "./matching";
 import type { Load } from "./types";
 
 export type TodayOption = {
@@ -64,7 +64,7 @@ export function buildTodayItem(
     appointment: formatWindow(load.pickupWindowStart, load.pickupWindowEnd),
     relative: relativePickup(load.pickupWindowStart, now),
     priority: load.priority,
-    trailer: trailerLabel(load.trailerType),
+    trailer: formatEquipment(load.trailerType, load.hazmat),
     needCover: load.priority === "HIGH" || needsCoverSoon(load.pickupWindowStart, now),
     best: bestMatch ? toOption(bestMatch, true) : null,
     options,

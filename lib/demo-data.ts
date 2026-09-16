@@ -11,6 +11,7 @@ import type {
   TruckReadiness,
   User,
 } from "./types";
+import { HAZMAT_NONE } from "./equipment";
 
 type City = { city: string; state: string; lat: number; lng: number };
 
@@ -88,6 +89,7 @@ export function createDemoState(): DemoState {
     hosDriveMinutes: number;
     hosDutyMinutes: number;
     trailerType: TrailerType;
+    hazmat?: string;
     mpg: number;
     readiness: TruckReadiness;
     weeklyLoadCount: number;
@@ -115,6 +117,11 @@ export function createDemoState(): DemoState {
     { unitNumber: "151", driverName: "Jonah Reed", loc: C.STL, hosDriveMinutes: 470, hosDutyMinutes: 580, trailerType: "DRY_VAN", mpg: 7.6, readiness: "LEGAL_NOW", weeklyLoadCount: 3, fuelGallons: 80 },
     { unitNumber: "262", driverName: "Lena Brooks", loc: C.NSH, hosDriveMinutes: 0, hosDutyMinutes: 0, trailerType: "FLATBED", mpg: 6.4, readiness: "MAINTENANCE", weeklyLoadCount: 1, fuelGallons: 20 },
     { unitNumber: "174", driverName: "Micah Stone", loc: C.CHI, hosDriveMinutes: 530, hosDutyMinutes: 640, trailerType: "DRY_VAN", mpg: 7.9, readiness: "LEGAL_NOW", weeklyLoadCount: 4, fuelGallons: 87 },
+    { unitNumber: "301", driverName: "Tanner Cole", loc: C.HOU, hosDriveMinutes: 510, hosDutyMinutes: 620, trailerType: "TANKER", mpg: 6.1, readiness: "LEGAL_NOW", weeklyLoadCount: 2, fuelGallons: 94, hazmat: "UN1057" },
+    { unitNumber: "308", driverName: "Harper Quinn", loc: C.TUL, hosDriveMinutes: 545, hosDutyMinutes: 655, trailerType: "TANKER", mpg: 6.0, readiness: "LEGAL_NOW", weeklyLoadCount: 1, fuelGallons: 88, hazmat: "UN1005" },
+    { unitNumber: "312", driverName: "Drew Hale", loc: C.DAL, hosDriveMinutes: 490, hosDutyMinutes: 600, trailerType: "SOFTSHELL_NG", mpg: 6.2, readiness: "LEGAL_NOW", weeklyLoadCount: 2, fuelGallons: 91 },
+    { unitNumber: "318", driverName: "Ivy Nash", loc: C.TUL, hosDriveMinutes: 470, hosDutyMinutes: 580, trailerType: "SOFTSHELL_ASPHALT", mpg: 5.8, readiness: "LEGAL_NOW", weeklyLoadCount: 1, fuelGallons: 105 },
+    { unitNumber: "325", driverName: "Cole Brennan", loc: C.IND, hosDriveMinutes: 560, hosDutyMinutes: 670, trailerType: "TANKER", mpg: 6.2, readiness: "LEGAL_NOW", weeklyLoadCount: 2, fuelGallons: 80, hazmat: "UN1057" },
   ];
 
   const trucks: Truck[] = truckRows.map((t) => ({
@@ -128,6 +135,7 @@ export function createDemoState(): DemoState {
     hosDriveMinutes: t.hosDriveMinutes,
     hosDutyMinutes: t.hosDutyMinutes,
     trailerType: t.trailerType,
+    hazmat: t.hazmat ?? HAZMAT_NONE,
     mpg: t.mpg,
     readiness: t.readiness,
     weeklyLoadCount: t.weeklyLoadCount,
@@ -146,6 +154,7 @@ export function createDemoState(): DemoState {
     pickupIn: [number, number];
     dropIn: [number, number];
     trailerType: TrailerType;
+    hazmat?: string;
     weightLbs: number;
     notes: string;
     priority: LoadPriority;
@@ -164,6 +173,10 @@ export function createDemoState(): DemoState {
     { reference: "RO-4462", customer: "John Deere", pickup: C.LIT, drop: C.MEM, pickupIn: [6, 15], dropIn: [16, 26], trailerType: "FLATBED", weightLbs: 44100, notes: "Farm equipment crates.", priority: "STANDARD", status: "OPEN" },
     { reference: "RO-4468", customer: "Procter & Gamble", pickup: C.CIN, drop: C.IND, pickupIn: [4, 11], dropIn: [10, 18], trailerType: "DRY_VAN", weightLbs: 35200, notes: "Short haul, good reset load.", priority: "STANDARD", status: "OPEN" },
     { reference: "RO-4475", customer: "Walmart DC", pickup: C.ATL, drop: C.JAX, pickupIn: [14, 26], dropIn: [30, 42], trailerType: "DRY_VAN", weightLbs: 39900, notes: "Tomorrow planning — flexible window.", priority: "STANDARD", status: "OPEN" },
+    { reference: "RO-4482", customer: "AmeriGas", pickup: C.HOU, drop: C.DAL, pickupIn: [5, 13], dropIn: [16, 26], trailerType: "TANKER", hazmat: "UN1057", weightLbs: 42000, notes: "UN 1057 propane. Keep valves sealed.", priority: "HIGH", status: "OPEN" },
+    { reference: "RO-4488", customer: "CF Industries", pickup: C.TUL, drop: C.KCY, pickupIn: [7, 16], dropIn: [22, 34], trailerType: "TANKER", hazmat: "UN1005", weightLbs: 43800, notes: "UN 1005 anhydrous ammonia. Placard required.", priority: "HIGH", status: "OPEN" },
+    { reference: "RO-4491", customer: "Encino Midstream", pickup: C.DAL, drop: C.HOU, pickupIn: [6, 14], dropIn: [18, 28], trailerType: "SOFTSHELL_NG", weightLbs: 36500, notes: "Natural gas softshell. No product mix.", priority: "STANDARD", status: "OPEN" },
+    { reference: "RO-4494", customer: "Ergon Asphalt", pickup: C.TUL, drop: C.STL, pickupIn: [8, 18], dropIn: [24, 36], trailerType: "SOFTSHELL_ASPHALT", weightLbs: 45200, notes: "Hot oil. Keep circulating.", priority: "STANDARD", status: "OPEN" },
     { reference: "RO-4401", customer: "Ford Parts", pickup: C.DET, drop: C.CLE, pickupIn: [-18, -10], dropIn: [2, 10], trailerType: "DRY_VAN", weightLbs: 28700, notes: "Already rolling.", priority: "STANDARD", status: "ASSIGNED" },
     { reference: "RO-4394", customer: "Lowes Regional", pickup: C.CLT, drop: C.ATL, pickupIn: [-30, -20], dropIn: [-8, 2], trailerType: "DRY_VAN", weightLbs: 33400, notes: "Assigned yesterday.", priority: "STANDARD", status: "ASSIGNED" },
   ];
@@ -185,6 +198,7 @@ export function createDemoState(): DemoState {
     deliveryWindowStart: hoursFromNow(l.dropIn[0]),
     deliveryWindowEnd: hoursFromNow(l.dropIn[1]),
     trailerType: l.trailerType,
+    hazmat: l.hazmat ?? HAZMAT_NONE,
     weightLbs: l.weightLbs,
     notes: l.notes,
     priority: l.priority,

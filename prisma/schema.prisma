@@ -16,6 +16,17 @@ enum TrailerType {
   DRY_VAN
   REEFER
   FLATBED
+  STEP_DECK
+  LOWBOY
+  HOTSHOT
+  POWER_ONLY
+  TANKER
+  BOX_TRUCK
+  SOFTSHELL_NG
+  SOFTSHELL_ASPHALT
+  DRY_BULK
+  CONTAINER
+  CURTAIN_SIDE
 }
 
 enum LoadStatus {
@@ -67,6 +78,7 @@ model Truck {
   hosDriveMinutes Int
   hosDutyMinutes  Int
   trailerType     TrailerType
+  hazmat          String         @default("NONE")
   mpg             Float
   readiness       TruckReadiness
   weeklyLoadCount Int            @default(0)
@@ -93,6 +105,7 @@ model Load {
   deliveryWindowStart DateTime
   deliveryWindowEnd  DateTime
   trailerType        TrailerType
+  hazmat             String       @default("NONE")
   weightLbs          Int
   notes              String       @default("")
   priority           LoadPriority @default(STANDARD)

@@ -47,10 +47,14 @@ export function FleetCsvUpload({
             </div>
             <div>
               <dt className="font-semibold text-ink">Optional</dt>
-              <dd>trailerType, lat, lng, hosDriveMinutesRemaining, hosDutyMinutesRemaining, mpg, status</dd>
+              <dd>trailerType, hazmat (or placard / unNumber), lat, lng, hosDriveMinutesRemaining, hosDutyMinutesRemaining, mpg, status</dd>
             </div>
           </dl>
           <p className="mb-4 text-xs text-ink-faint">
+            Missing lat/lng marks location unknown. Trailer types include tanker and
+            softshell. Hazmat defaults to none; a load that needs 1057 or 1005 only
+            matches a truck with that same placard. On Vercel an uploaded fleet lasts
+            for this serverless instance — a cold start resets to demo trucks.
             Missing lat/lng marks location unknown. On Vercel an uploaded fleet lasts for this
             serverless instance — a cold start resets to demo trucks. Samsara (Setup) can refresh
             GPS and hours into this same list when connected.
@@ -80,7 +84,7 @@ export function FleetCsvUpload({
               id={compact ? "onboard-csvText" : "csvText"}
               name="csvText"
               className="field min-h-28 font-mono text-xs"
-              placeholder="truckNumber,driverName,trailerType,lat,lng&#10;401,Jamie Cole,dry_van,39.77,-86.16"
+              placeholder="truckNumber,driverName,trailerType,hazmat,lat,lng&#10;301,Tanner Cole,tanker,1057,29.76,-95.37"
             />
           </div>
           <fieldset className="flex flex-wrap gap-4 text-sm">

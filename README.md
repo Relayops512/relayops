@@ -13,7 +13,7 @@ Dispatchers get a **Today** board of loads that need cover, a plain-English reas
 
 A second dispatcher (`jordan@relayops.demo` / same password) exists for the optional fairness tools.
 
-The UI shows a **Demo data** badge while the sample fleet is in use. Seeded data includes 22 trucks (including Truck 184 / Marcus Hill) and 15 loads across Midwest / South lanes.
+The UI shows a **Demo data** badge while the sample fleet is in use. Seeded data includes 27 trucks (including Truck 184 / Marcus Hill plus tanker and softshell units) and 19 loads across Midwest / South lanes, including propane (UN 1057), ammonia (UN 1005), NG softshell, and asphalt.
 
 ## Local run
 
@@ -45,10 +45,11 @@ Each open load is ranked against the live truck pool from **seed / database fiel
 | Deadhead | Haversine miles from truck GPS to pickup |
 | Fuel | `(deadhead + loaded miles) / MPG × diesel` |
 | ETA | Can the truck make the pickup window at 55 mph |
-| Trailer fit | Dry van / reefer / flatbed must match |
+| Trailer fit | Equipment type must match (dry van, tanker, softshell, …) |
+| Hazmat | If the load requires a placard (UN 1057, UN 1005, …), the truck must match **exactly** |
 | Fairness | Weekly load count vs fleet average (used in ranking; the audit UI is optional) |
 
-Legal-now + trailer match + enough HOS is **eligible**. Picking anyone else still works with a **short note**.
+Legal-now + trailer match + matching hazmat (when required) + enough HOS is **eligible**. Picking anyone else still works with a **short note**.
 
 ## Company pilot deploy (shareable URL)
 
@@ -96,7 +97,7 @@ See `.env.example`.
 ## Product map
 
 - **Today** — Open loads sorted by appointment. Each row shows the lane, window, best truck, and a one-line why. Assign uses the top-ranked truck; expand for other options.
-- **New load** — Pickup, delivery, windows, trailer, weight.
+- **New load** — Pickup, delivery, windows, trailer / equipment type, hazmat product, weight.
 - **Fleet** — Ready vs not. Add a few trucks or upload a CSV (replace or merge).
 - **Setup** — Samsara placeholder (demo mode on). **Advanced → Fairness tools** is off by default.
 - **Help** — One-page quick start from the header (or Setup). Printable; markdown at `/help.md`.
@@ -111,7 +112,8 @@ Dispatchers can load a company fleet without Samsara from **Fleet**. Download th
 | --- | --- | --- |
 | `truckNumber` | yes | Aliases: `unit`, `unitNumber`, `truck` |
 | `driverName` | yes | Aliases: `driver`, `name` |
-| `trailerType` | no | `dry_van`, `reefer`, `flatbed` (default dry van) |
+| `trailerType` | no | `dry_van`, `reefer`, `flatbed`, `step_deck`, `lowboy`, `hotshot`, `power_only`, `tanker`, `box_truck`, `softshell_ng`, `softshell_asphalt`, `dry_bulk`, `container`, `curtain_side` (default dry van) |
+| `hazmat` | no | Product / placard. Aliases: `placard`, `unNumber`. Values: `none`, `1057` (propane/butane), `1005` (ammonia), or another UN number. Default none. Truck must match a load's requirement exactly. |
 | `lat`, `lng` | no | If omitted, location is unknown and match quality drops |
 | `hosDriveMinutesRemaining` | no | Default 480 |
 | `hosDutyMinutesRemaining` | no | Default 600 |
@@ -122,10 +124,11 @@ Dispatchers can load a company fleet without Samsara from **Fleet**. Download th
 Example:
 
 ```csv
-truckNumber,driverName,trailerType,lat,lng,hosDriveMinutesRemaining,hosDutyMinutesRemaining,mpg,status,weeklyLoadCount
-184,Marcus Hill,dry_van,39.7684,-86.1581,525,605,7.6,available,2
-191,Elena Ruiz,dry_van,38.2527,-85.7585,480,590,7.2,available,1
-203,Priya Shah,reefer,,,390,510,6.9,available,0
+truckNumber,driverName,trailerType,hazmat,lat,lng,hosDriveMinutesRemaining,hosDutyMinutesRemaining,mpg,status,weeklyLoadCount
+184,Marcus Hill,dry_van,none,39.7684,-86.1581,525,605,7.6,available,2
+191,Elena Ruiz,dry_van,none,38.2527,-85.7585,480,590,7.2,available,1
+203,Priya Shah,reefer,none,,,390,510,6.9,available,0
+301,Tanner Cole,tanker,1057,29.7604,-95.3698,510,620,6.1,available,1
 ```
 
 - **Replace** swaps the live truck list. **Merge** upserts by truck number.

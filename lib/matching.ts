@@ -1,5 +1,14 @@
 import type { TrailerType, TruckReadiness } from "./types";
 import { CRUISE_MPH, haversineMiles, hoursForMiles } from "./geo";
+import {
+  formatEquipment,
+  hazmatLabel,
+  hazmatSatisfied,
+  hazmatShortLabel,
+  isHazmatRequired,
+  normalizeHazmat,
+  trailerLabel,
+} from "./equipment";
 
 export type MatchLoad = {
   pickupLat: number;
@@ -9,6 +18,7 @@ export type MatchLoad = {
   deliveryLat: number;
   deliveryLng: number;
   trailerType: TrailerType;
+  hazmat?: string;
   weightLbs: number;
 };
 
@@ -23,6 +33,7 @@ export type MatchTruck = {
   hosDriveMinutes: number;
   hosDutyMinutes: number;
   trailerType: TrailerType;
+  hazmat?: string;
   mpg: number;
   readiness: TruckReadiness;
   weeklyLoadCount: number;
@@ -56,6 +67,8 @@ export type TruckMatch = {
   arrivesInWindow: boolean;
   hosEnough: boolean;
   trailerFit: "exact" | "mismatch";
+  hazmatFit: "exact" | "not_required" | "mismatch";
+  requiredHazmat: string;
   legalNow: boolean;
   eligible: boolean;
   reasons: ReasonChip[];
@@ -149,9 +162,16 @@ export function scoreTruck(
 
   const trailerFit: "exact" | "mismatch" =
     truck.trailerType === load.trailerType ? "exact" : "mismatch";
+  const requiredHazmat = normalizeHazmat(load.hazmat);
+  const truckHazmat = normalizeHazmat(truck.hazmat);
+  const hazmatFit: "exact" | "not_required" | "mismatch" = !isHazmatRequired(requiredHazmat)
+    ? "not_required"
+    : hazmatSatisfied(requiredHazmat, truckHazmat)
+      ? "exact"
+      : "mismatch";
 
   const legalNow = truck.readiness === "LEGAL_NOW";
-  const eligible = legalNow && trailerFit === "exact" && hosEnough;
+  const eligible = legalNow && trailerFit === "exact" && hazmatFit !== "mismatch" && hosEnough;
 
   const breakdown: ScoreBreakdown = {
     hos: hosScore(truck.hosDriveMinutes, truck.hosDutyMinutes, neededHours),
@@ -172,6 +192,7 @@ export function scoreTruck(
 
   if (!legalNow) score *= 0.35;
   if (trailerFit === "mismatch") score *= 0.45;
+  if (hazmatFit === "mismatch") score *= 0.45;
   if (!hosEnough) score *= 0.55;
   if (!locationKnown) score *= 0.82;
   score = clamp(score);
@@ -198,6 +219,11 @@ export function scoreTruck(
     label: trailerFit === "exact" ? trailerLabel(truck.trailerType) : `Needs ${trailerLabel(load.trailerType)}`,
     tone: trailerFit === "exact" ? "neutral" : "bad",
   });
+  if (hazmatFit === "mismatch") {
+    reasons.push({ label: `Needs ${hazmatLabel(requiredHazmat)}`, tone: "bad" });
+  } else if (hazmatFit === "exact") {
+    reasons.push({ label: hazmatLabel(truckHazmat), tone: "neutral" });
+  }
   reasons.push({
     label: arrivesInWindow ? "Makes pickup window" : "Misses pickup window",
     tone: arrivesInWindow ? "good" : "warn",
@@ -224,6 +250,8 @@ export function scoreTruck(
     arrivesInWindow,
     hosEnough,
     trailerFit,
+    hazmatFit,
+    requiredHazmat,
     legalNow,
     eligible,
     reasons,
@@ -236,15 +264,28 @@ function formatDrive(minutes: number): string {
   return `${h}h ${String(m).padStart(2, "0")}m`;
 }
 
-/** One-line dispatcher reason, e.g. "12 mi · 8h HOS · dry van". */
+function whyEquipment(match: TruckMatch): string {
+  const trailer = trailerLabel(match.truck.trailerType).toLowerCase();
+  if (match.hazmatFit === "mismatch") {
+    const short = hazmatShortLabel(match.requiredHazmat);
+    return short ? `${trailer} · needs ${short}` : trailer;
+  }
+  const truckCode = hazmatShortLabel(match.truck.hazmat);
+  if (match.hazmatFit === "exact" || truckCode) {
+    return truckCode ? `${trailer} · ${truckCode}` : trailer;
+  }
+  return trailer;
+}
+
+/** One-line dispatcher reason, e.g. "12 mi · 8h HOS · tanker · 1057". */
 export function matchWhyLine(match: TruckMatch): string {
   const hosHours = Math.max(0, Math.round(match.truck.hosDriveMinutes / 60));
-  const trailer = trailerLabel(match.truck.trailerType).toLowerCase();
+  const equipment = whyEquipment(match);
   const hos = `${hosHours}h HOS`;
   if (match.truck.locationKnown === false) {
-    return `location unknown · ${hos} · ${trailer}`;
+    return `location unknown · ${hos} · ${equipment}`;
   }
-  return `${Math.round(match.deadheadMiles)} mi · ${hos} · ${trailer}`;
+  return `${Math.round(match.deadheadMiles)} mi · ${hos} · ${equipment}`;
 }
 
 const BALANCE_REASON = /lighter week|already busy this week|fairness|weekly average|heavy week/i;
@@ -272,16 +313,7 @@ export function displayBreakdown(
   return rest;
 }
 
-export function trailerLabel(type: TrailerType): string {
-  switch (type) {
-    case "DRY_VAN":
-      return "Dry van";
-    case "REEFER":
-      return "Reefer";
-    case "FLATBED":
-      return "Flatbed";
-  }
-}
+export { trailerLabel, formatEquipment };
 
 export function rankTrucks(load: MatchLoad, trucks: MatchTruck[], now = new Date()): TruckMatch[] {
   const fleetAvg =

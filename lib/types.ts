@@ -1,5 +1,7 @@
+import type { TrailerType } from "./equipment";
+
 export type Role = "DISPATCHER" | "VIEWER";
-export type TrailerType = "DRY_VAN" | "REEFER" | "FLATBED";
+export type { TrailerType };
 export type LoadStatus = "OPEN" | "ASSIGNED" | "COMPLETED";
 export type TruckReadiness = "LEGAL_NOW" | "HOS_BLOCKED" | "ON_LOAD" | "MAINTENANCE";
 export type LoadPriority = "STANDARD" | "HIGH";
@@ -31,6 +33,8 @@ export type Truck = {
   hosDriveMinutes: number;
   hosDutyMinutes: number;
   trailerType: TrailerType;
+  /** Product / placard capability. NONE when not hazmat. Extensible UN codes (UN1057, UN1005, …). */
+  hazmat: string;
   mpg: number;
   readiness: TruckReadiness;
   weeklyLoadCount: number;
@@ -58,6 +62,8 @@ export type Load = {
   deliveryWindowStart: Date;
   deliveryWindowEnd: Date;
   trailerType: TrailerType;
+  /** Required product / placard. NONE means no hazmat constraint. Truck must match exactly when set. */
+  hazmat: string;
   weightLbs: number;
   notes: string;
   priority: LoadPriority;
