@@ -17,7 +17,7 @@ export function QuickAssign({
   truckId: string;
   isOverride: boolean;
   canWrite: boolean;
-  returnTo?: "board" | "load";
+  returnTo?: "board" | "load" | "covering";
   label?: string;
   className?: string;
   onAssigned?: () => void | Promise<void>;

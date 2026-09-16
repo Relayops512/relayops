@@ -8,6 +8,8 @@ import { EmptyState } from "@/components/EmptyState";
 import { cityState, formatWeight, formatWindow, formatWhen } from "@/lib/format";
 import { formatMiles } from "@/lib/geo";
 import { matchWhyLine, formatEquipment } from "@/lib/matching";
+import { COVERING_LABELS, coveringChipClass } from "@/lib/covering";
+import { CoveringStatusControl } from "@/components/CoveringStatusControl";
 
 export default async function LoadDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -42,8 +44,20 @@ export default async function LoadDetailPage({ params }: { params: Promise<{ id:
 
       <section className="card mb-6 p-6">
         <div className="flex flex-wrap items-center gap-2">
-          <span className={`chip ${load.status === "OPEN" ? "bg-teal-soft text-teal" : "bg-sage text-sage-text"}`}>
-            {load.status === "OPEN" ? "Needs cover" : "Covered"}
+          <span
+            className={`chip ${
+              load.status === "OPEN"
+                ? "bg-teal-soft text-teal"
+                : load.status === "COMPLETED"
+                  ? "bg-sage text-sage-text"
+                  : coveringChipClass(assignment?.coveringStatus ?? "ASSIGNED")
+            }`}
+          >
+            {load.status === "OPEN"
+              ? "Needs cover"
+              : load.status === "COMPLETED"
+                ? "Done"
+                : COVERING_LABELS[assignment?.coveringStatus ?? "ASSIGNED"]}
           </span>
           {load.priority === "HIGH" ? <span className="chip bg-peach text-peach-text">Soon</span> : null}
           <span className="chip bg-cream text-ink-muted">{formatEquipment(load.trailerType, load.hazmat)}</span>
@@ -81,9 +95,25 @@ export default async function LoadDetailPage({ params }: { params: Promise<{ id:
           {assignment.overrideReason ? (
             <p className="mt-3 text-sm text-ink-muted">{assignment.overrideReason}</p>
           ) : null}
-          <Link href="/board" className="mt-5 inline-block text-sm font-semibold text-teal">
-            Back to Today
-          </Link>
+          {load.status === "COMPLETED" ? (
+            <p className="mt-4 text-sm text-ink-muted">This load is complete.</p>
+          ) : (
+            <div className="mt-5">
+              <CoveringStatusControl
+                loadId={load.id}
+                status={assignment.coveringStatus}
+                canWrite={canWrite}
+              />
+            </div>
+          )}
+          <div className="mt-5 flex flex-wrap gap-4">
+            <Link href="/covering" className="text-sm font-semibold text-teal">
+              Back to Covering
+            </Link>
+            <Link href="/board" className="text-sm font-semibold text-ink-muted">
+              Today
+            </Link>
+          </div>
         </section>
       ) : panelMatches.length === 0 ? (
         <section className="card">

@@ -3,6 +3,13 @@ import type { TrailerType } from "./equipment";
 export type Role = "DISPATCHER" | "VIEWER";
 export type { TrailerType };
 export type LoadStatus = "OPEN" | "ASSIGNED" | "COMPLETED";
+export type CoveringStatus =
+  | "ASSIGNED"
+  | "EN_ROUTE_PICKUP"
+  | "AT_PICKUP"
+  | "LOADED"
+  | "EN_ROUTE_DELIVERY"
+  | "DELIVERED";
 export type TruckReadiness = "LEGAL_NOW" | "HOS_BLOCKED" | "ON_LOAD" | "MAINTENANCE";
 export type LoadPriority = "STANDARD" | "HIGH";
 export type FleetSource = "demo" | "csv" | "manual" | "samsara";
@@ -82,6 +89,7 @@ export type Assignment = {
   isOverride: boolean;
   overrideReason: string | null;
   topTruckId: string | null;
+  coveringStatus: CoveringStatus;
   createdAt: Date;
 };
 

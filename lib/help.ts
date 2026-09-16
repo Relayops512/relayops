@@ -20,7 +20,7 @@ export const HELP_DAY = {
     {
       label: "Assign",
       detail:
-        "Puts that truck on the load. Other trucks is there if you need someone else — add a short note.",
+        "Puts that truck on the load. Assigned loads stay on Covering. Other trucks is there if you need someone else — add a short note.",
     },
     {
       label: "New load",
@@ -46,6 +46,7 @@ export const HELP_WHERE = {
   heading: "Where things live",
   rows: [
     { place: "Today", what: "Loads that need cover. Assign the recommended truck." },
+    { place: "Covering", what: "Assigned loads — truck, driver, and status until complete." },
     { place: "New load", what: "Lane, appointment, trailer, and weight." },
     { place: "Fleet", what: "Who’s ready. Add a few trucks or upload a CSV." },
     {

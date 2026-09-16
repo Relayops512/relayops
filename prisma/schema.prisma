@@ -126,6 +126,7 @@ model Assignment {
   isOverride     Boolean  @default(false)
   overrideReason String?
   topTruckId     String?
+  coveringStatus String   @default("ASSIGNED")
   createdAt      DateTime @default(now())
 
   load       Load @relation(fields: [loadId], references: [id], onDelete: Cascade)

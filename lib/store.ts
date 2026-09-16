@@ -7,6 +7,7 @@ import type {
   AuditEvent,
   AuditEventWithActor,
   AuditKind,
+  CoveringStatus,
   IntegrationSetting,
   Load,
   LoadPriority,
@@ -14,6 +15,7 @@ import type {
   Truck,
   User,
 } from "./types";
+import { applyCoveringStatus, coveringAssignments } from "./covering";
 
 const globalForStore = globalThis as unknown as { relayopsDemo?: DemoState };
 
@@ -105,6 +107,22 @@ export const store = {
     return this.listAssignments().find((a) => a.loadId === loadId) ?? null;
   },
 
+  listCovering(mode: "active" | "done" = "active"): AssignmentWithRels[] {
+    return coveringAssignments(this.listAssignments(), mode);
+  },
+
+  setCoveringStatus(loadId: string, status: CoveringStatus) {
+    const s = state();
+    const load = s.loads.find((l) => l.id === loadId);
+    const assignment = s.assignments.find((a) => a.loadId === loadId);
+    if (!load || !assignment) throw new Error("Assignment not found.");
+    if (load.status === "OPEN") throw new Error("Load is not assigned.");
+    const truck = s.trucks.find((t) => t.id === assignment.truckId);
+    if (!truck) throw new Error("Truck not found.");
+    applyCoveringStatus({ load, assignment, truck, status });
+    return this.getAssignmentForLoad(loadId);
+  },
+
   listAuditEvents(take = 40): AuditEventWithActor[] {
     return [...state().auditEvents]
       .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
@@ -192,6 +210,7 @@ export const store = {
     const assignment: Assignment = {
       id: nid("asg"),
       ...input,
+      coveringStatus: "ASSIGNED",
       createdAt: new Date(),
     };
     s.assignments.unshift(assignment);

@@ -20,15 +20,17 @@ describe("dispatcher quick start", () => {
       ["Sign in", "Today", "Assign", "New load", "Fleet CSV"],
     );
     assert.match(HELP_DAY.heading, /how to run a day/i);
+    assert.match(HELP_DAY.steps[2].detail, /Covering/);
   });
 
-  it("maps Today, New load, Fleet, and Setup", () => {
+  it("maps Today, Covering, New load, Fleet, and Setup", () => {
     assert.deepEqual(
       HELP_WHERE.rows.map((row) => row.place),
-      ["Today", "New load", "Fleet", "Setup"],
+      ["Today", "Covering", "New load", "Fleet", "Setup"],
     );
-    assert.match(HELP_WHERE.rows[3].what, /Advanced/i);
-    assert.match(HELP_WHERE.rows[3].what, /off by default/i);
+    assert.match(HELP_WHERE.rows[1].what, /Assigned loads/i);
+    assert.match(HELP_WHERE.rows[4].what, /Advanced/i);
+    assert.match(HELP_WHERE.rows[4].what, /off by default/i);
   });
 
   it("includes first-time setup and the short tips", () => {
