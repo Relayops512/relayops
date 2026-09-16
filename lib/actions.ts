@@ -159,40 +159,42 @@ export async function assignLoadAction(formData: FormData): Promise<{ error?: st
   redirect(returnTo === "board" ? "/board" : `/loads/${loadId}`);
 }
 
-export async function saveSamsaraSettingsAction(formData: FormData) {
+export async function syncSamsaraAction(formData?: FormData) {
   const session = await requireDispatcher();
-  const enabled = formData.get("enabled") === "on";
-  const demoMode = formData.get("demoMode") === "on";
-  const orgId = String(formData.get("orgId") ?? "");
-  const apiToken = String(formData.get("apiToken") ?? "");
-  const existing = store.getIntegration();
-  store.saveIntegration({
-    enabled,
-    demoMode,
-    orgId,
-    apiTokenHint: apiToken ? `••••${apiToken.slice(-4)}` : existing.apiTokenHint,
-  });
+  const mode = formData?.get("mode") === "replace" ? "replace" : "merge";
+  const { runSamsaraSync } = await import("@/lib/samsara/sync");
+  const result = await runSamsaraSync(mode);
   store.addAudit({
     kind: "SAMSARA_SYNC",
     actorId: session.user.id,
-    message: `${session.user.name} updated Samsara connector settings (demo mode ${demoMode ? "on" : "off"}).`,
-    metaJson: JSON.stringify({ enabled, demoMode, orgId }),
-  });
-  revalidatePath("/setup");
-}
-
-export async function syncSamsaraAction() {
-  const session = await requireDispatcher();
-  store.markSamsaraSynced();
-  store.addAudit({
-    kind: "SAMSARA_SYNC",
-    actorId: session.user.id,
-    message: `${session.user.name} ran a demo Samsara sync. Live API keys are not required for this pilot.`,
-    metaJson: JSON.stringify({ demo: true }),
+    message: result.ok
+      ? `${session.user.name} synced the fleet from Samsara (${mode}). ${result.message}`
+      : `${session.user.name} tried to sync from Samsara. ${result.message}`,
+    metaJson: JSON.stringify({
+      mode,
+      ok: result.ok,
+      created: result.created,
+      updated: result.updated,
+      kept: result.kept,
+      vehicleCount: result.vehicleCount,
+    }),
   });
   revalidatePath("/board");
   revalidatePath("/fleet");
   revalidatePath("/setup");
+  revalidatePath("/audit");
+}
+
+export async function disconnectSamsaraAction() {
+  const session = await requireDispatcher();
+  store.disconnectSamsara();
+  store.addAudit({
+    kind: "SAMSARA_SYNC",
+    actorId: session.user.id,
+    message: `${session.user.name} disconnected Samsara. The live fleet was left in place.`,
+  });
+  revalidatePath("/setup");
+  revalidatePath("/fleet");
 }
 
 export type FleetImportState = {
@@ -337,6 +339,8 @@ export async function addTruckAction(
     fuelGallons: 80,
     lastPingAt: new Date(),
     locationKnown: true,
+    source: "manual",
+    samsaraVehicleId: null,
   });
   revalidatePath("/fleet");
   revalidatePath("/board");

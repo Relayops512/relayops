@@ -72,7 +72,8 @@ export function Onboarding({
               <h1 className="text-3xl font-semibold tracking-tight text-ink">Add your fleet</h1>
               <p className="mt-3 text-base leading-relaxed text-ink-muted">
                 Upload a CSV or add a couple of trucks. You can keep the sample fleet if you just
-                want to look around.
+                want to look around. Samsara is optional later in Setup — CSV is enough for the
+                pilot.
               </p>
             </div>
             <div className="card p-5">
