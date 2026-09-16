@@ -1,4 +1,5 @@
 import type { TrailerType, Truck, TruckReadiness } from "../types";
+import { HAZMAT_NONE } from "../equipment";
 import type {
   SamsaraAssignment,
   SamsaraDriver,
@@ -189,6 +190,7 @@ function mapOneVehicle(
     hosDriveMinutes: drive ?? 480,
     hosDutyMinutes: duty ?? 600,
     trailerType: trailer ?? "DRY_VAN",
+    hazmat: HAZMAT_NONE,
     mpg: 7,
     readiness: readinessFromHos(drive),
     weeklyLoadCount: 0,
