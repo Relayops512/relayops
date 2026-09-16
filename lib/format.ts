@@ -28,3 +28,20 @@ export function formatWeight(lbs: number): string {
 export function cityState(city: string, state: string): string {
   return `${city}, ${state}`;
 }
+
+export function relativePickup(start: Date | string, now = new Date()): string {
+  const hours = (new Date(start).getTime() - now.getTime()) / 3600000;
+  if (hours < -2) return "Window passed";
+  if (hours < 0) return "Window open";
+  if (hours < 1) return "Pickup soon";
+  if (hours < 24) return `in ${Math.round(hours)}h`;
+  const days = Math.round(hours / 24);
+  return `in ${days}d`;
+}
+
+export const NEED_COVER_HOURS = 8;
+
+export function needsCoverSoon(start: Date | string, now = new Date()): boolean {
+  return new Date(start).getTime() - now.getTime() < NEED_COVER_HOURS * 3600 * 1000;
+}
+

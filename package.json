@@ -2,7 +2,7 @@
   "name": "relayops",
   "version": "0.1.0",
   "private": true,
-  "description": "RelayOps — rules-based truck dispatch without favorites",
+  "description": "RelayOps — cover loads with the best available truck",
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build",
@@ -12,7 +12,7 @@
     "db:push": "prisma db push",
     "db:seed": "tsx prisma/seed.ts",
     "db:reset": "prisma db push --force-reset && tsx prisma/seed.ts --force",
-    "test": "tsx --test lib/matching.test.ts lib/geo.test.ts lib/fleet-csv.test.ts"
+    "test": "tsx --test lib/matching.test.ts lib/geo.test.ts lib/fleet-csv.test.ts lib/today.test.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

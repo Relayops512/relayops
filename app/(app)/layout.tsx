@@ -3,6 +3,8 @@ import { auth, isDispatcher } from "@/lib/auth";
 import { BottomNav } from "@/components/BottomNav";
 import { logoutAction } from "@/lib/login-actions";
 
+export const dynamic = "force-dynamic";
+
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const session = await auth();
   if (!session?.user) redirect("/login");
@@ -10,15 +12,15 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   return (
     <div className="min-h-screen bg-cream">
-      <div className="mx-auto flex min-h-screen max-w-5xl flex-col px-4 pb-4 pt-6 sm:px-6">
-        <div className="mb-4 flex items-center justify-between text-xs text-ink-muted">
+      <div className="mx-auto flex min-h-screen max-w-5xl flex-col px-5 pb-6 pt-8 sm:px-8">
+        <div className="mb-8 flex items-center justify-between text-sm text-ink-muted">
           <p>
-            Signed in as <span className="font-semibold text-ink">{session.user.name}</span>
-            <span className="mx-1.5">·</span>
-            {write ? "Dispatcher" : "Viewer (read-only)"}
+            {session.user.name}
+            <span className="mx-1.5 text-ink-faint">·</span>
+            {write ? "Dispatcher" : "Viewer"}
           </p>
           <form action={logoutAction}>
-            <button type="submit" className="font-semibold text-teal hover:underline">
+            <button type="submit" className="font-medium text-ink-muted hover:text-ink">
               Sign out
             </button>
           </form>

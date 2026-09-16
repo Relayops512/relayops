@@ -1,4 +1,5 @@
 import type {
+  AppSettings,
   Assignment,
   AuditEvent,
   IntegrationSetting,
@@ -52,6 +53,7 @@ export type DemoState = {
   assignments: Assignment[];
   auditEvents: AuditEvent[];
   integration: IntegrationSetting;
+  settings: AppSettings;
 };
 
 export function createDemoState(): DemoState {
@@ -279,5 +281,11 @@ export function createDemoState(): DemoState {
     notes: "Pilot uses seeded demo fleet. Live Samsara pull is stubbed. Motive and Geotab connectors are planned next.",
   };
 
-  return { users, trucks, loads, assignments, auditEvents, integration };
+  const settings: AppSettings = {
+    fairnessToolsEnabled: false,
+    fleetIsDemo: true,
+    onboardedUserIds: [],
+  };
+
+  return { users, trucks, loads, assignments, auditEvents, integration, settings };
 }

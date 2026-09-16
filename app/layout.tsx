@@ -8,9 +8,8 @@ const geist = Geist({
 });
 
 export const metadata: Metadata = {
-  title: "RelayOps — Dispatch without favorites",
-  description:
-    "Rules-based load assignment for trucking companies. Score trucks by HOS, deadhead, fuel, ETA, trailer fit, and fairness.",
+  title: "RelayOps",
+  description: "Cover loads with the best available truck.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

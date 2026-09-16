@@ -7,6 +7,8 @@ import { auth } from "@/lib/auth";
 import { store } from "@/lib/store";
 import { rankTrucks } from "@/lib/matching";
 import type { LoadPriority, TrailerType } from "@/lib/types";
+import { CITIES } from "@/lib/cities";
+import { setOnboardingCookie } from "@/lib/onboarding";
 
 const trailerEnum = z.enum(["DRY_VAN", "REEFER", "FLATBED"]);
 const priorityEnum = z.enum(["STANDARD", "HIGH"]);
@@ -118,8 +120,8 @@ export async function assignLoadAction(formData: FormData): Promise<{ error?: st
   const top = ranked.find((m) => m.eligible) ?? ranked[0];
   const isOverride = forceOverride || !chosen?.eligible || (top && top.truck.id !== truckId);
 
-  if (isOverride && overrideReason.length < 8) {
-    return { error: "Override requires a reason (at least 8 characters)." };
+  if (isOverride && overrideReason.length < 3) {
+    return { error: "Add a short note for why this truck (a few words is enough)." };
   }
 
   store.assignLoad({
@@ -137,8 +139,8 @@ export async function assignLoadAction(formData: FormData): Promise<{ error?: st
     kind: isOverride ? "OVERRIDE" : "ASSIGNMENT",
     actorId: session.user.id,
     message: isOverride
-      ? `${session.user.name} overrode the recommended truck for ${load.reference} → Truck ${truck.unitNumber} (${truck.driverName}). Reason: ${overrideReason}`
-      : `${session.user.name} assigned ${load.reference} to Truck ${truck.unitNumber} (${truck.driverName}) at score ${chosen?.score ?? 0}.`,
+      ? `${session.user.name} assigned ${load.reference} to Truck ${truck.unitNumber} (${truck.driverName}) with a note: ${overrideReason}`
+      : `${session.user.name} assigned ${load.reference} to Truck ${truck.unitNumber} (${truck.driverName}).`,
     metaJson: JSON.stringify({
       loadId,
       truckId,
@@ -151,8 +153,10 @@ export async function assignLoadAction(formData: FormData): Promise<{ error?: st
   revalidatePath("/board");
   revalidatePath("/fleet");
   revalidatePath("/audit");
+  revalidatePath("/setup");
   revalidatePath(`/loads/${loadId}`);
-  redirect(`/loads/${loadId}`);
+  const returnTo = String(formData.get("returnTo") ?? "");
+  redirect(returnTo === "board" ? "/board" : `/loads/${loadId}`);
 }
 
 export async function saveSamsaraSettingsAction(formData: FormData) {
@@ -284,4 +288,124 @@ export async function importFleetCsvAction(
         ? `Replaced live fleet with ${trucks.length} truck${trucks.length === 1 ? "" : "s"}. Matching uses this set now.`
         : `Merged ${created} new and ${updated} updated truck${created + updated === 1 ? "" : "s"}. Matching uses the live fleet now.`,
   };
+}
+
+export type AddTruckState = {
+  ok: boolean;
+  message: string;
+};
+
+const addTruckSchema = z.object({
+  unitNumber: z.string().trim().min(1).max(16),
+  driverName: z.string().trim().min(2).max(80),
+  cityKey: z.string().min(3),
+  trailerType: trailerEnum,
+});
+
+export async function addTruckAction(
+  _prev: AddTruckState | null,
+  formData: FormData,
+): Promise<AddTruckState> {
+  await requireDispatcher();
+  const parsed = addTruckSchema.safeParse({
+    unitNumber: formData.get("unitNumber"),
+    driverName: formData.get("driverName"),
+    cityKey: formData.get("cityKey"),
+    trailerType: formData.get("trailerType"),
+  });
+  if (!parsed.success) {
+    return { ok: false, message: "Add a truck number, driver, and city." };
+  }
+  const city = CITIES.find((c) => `${c.city}|${c.state}` === parsed.data.cityKey);
+  if (!city) {
+    return { ok: false, message: "Pick a city from the list." };
+  }
+  store.addTruck({
+    id: `truck-${parsed.data.unitNumber}`,
+    unitNumber: parsed.data.unitNumber,
+    driverName: parsed.data.driverName,
+    lat: city.lat,
+    lng: city.lng,
+    city: city.city,
+    state: city.state,
+    hosDriveMinutes: 480,
+    hosDutyMinutes: 600,
+    trailerType: parsed.data.trailerType,
+    mpg: 7.2,
+    readiness: "LEGAL_NOW",
+    weeklyLoadCount: 0,
+    fuelGallons: 80,
+    lastPingAt: new Date(),
+    locationKnown: true,
+  });
+  revalidatePath("/fleet");
+  revalidatePath("/board");
+  revalidatePath("/setup");
+  return {
+    ok: true,
+    message: `Truck ${parsed.data.unitNumber} (${parsed.data.driverName}) is in the live pool.`,
+  };
+}
+
+export async function createSampleLoadAction(): Promise<{ ok: boolean; loadId?: string; error?: string }> {
+  const session = await requireDispatcher();
+  const pickup = CITIES.find((c) => c.city === "Indianapolis") ?? CITIES[1];
+  const drop = CITIES.find((c) => c.city === "Chicago") ?? CITIES[0];
+  const load = store.createLoad({
+    reference: nextReference(),
+    customer: "Sample freight",
+    pickupCity: pickup.city,
+    pickupState: pickup.state,
+    pickupLat: pickup.lat,
+    pickupLng: pickup.lng,
+    pickupWindowStart: new Date(Date.now() + 4 * 3600 * 1000),
+    pickupWindowEnd: new Date(Date.now() + 12 * 3600 * 1000),
+    deliveryCity: drop.city,
+    deliveryState: drop.state,
+    deliveryLat: drop.lat,
+    deliveryLng: drop.lng,
+    deliveryWindowStart: new Date(Date.now() + 18 * 3600 * 1000),
+    deliveryWindowEnd: new Date(Date.now() + 28 * 3600 * 1000),
+    trailerType: "DRY_VAN",
+    weightLbs: 36500,
+    notes: "Sample load to try covering.",
+    priority: "STANDARD",
+  });
+  store.addAudit({
+    kind: "LOAD_CREATED",
+    actorId: session.user.id,
+    message: `${session.user.name} added a sample load ${load.reference}.`,
+    metaJson: JSON.stringify({ loadId: load.id, sample: true }),
+  });
+  revalidatePath("/board");
+  revalidatePath("/loads/new");
+  revalidatePath("/", "layout");
+  return { ok: true, loadId: load.id };
+}
+
+export async function saveFairnessSettingsAction(formData: FormData) {
+  await requireDispatcher();
+  const enabled = formData.get("fairnessToolsEnabled") === "on";
+  store.setFairnessToolsEnabled(enabled);
+  revalidatePath("/setup");
+  revalidatePath("/audit");
+  revalidatePath("/board");
+  revalidatePath("/fleet");
+}
+
+export async function completeOnboardingAction() {
+  const session = await requireDispatcher();
+  store.markOnboarded(session.user.id);
+  await setOnboardingCookie();
+  revalidatePath("/board");
+  revalidatePath("/setup");
+  revalidatePath("/", "layout");
+}
+
+export async function skipOnboardingAction() {
+  const session = await requireDispatcher();
+  store.markOnboarded(session.user.id);
+  await setOnboardingCookie();
+  revalidatePath("/board");
+  revalidatePath("/", "layout");
 }

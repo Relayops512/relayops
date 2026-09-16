@@ -1,8 +1,8 @@
 # RelayOps
 
-**Dispatch without favorites.** RelayOps is a company-pilot web app that assigns incoming truck loads to the closest / best available trucks using rules — not seniority or dispatcher habit.
+RelayOps is a company-pilot web app that covers incoming truck loads with the **best available truck** — closest, legal, and on time.
 
-Dispatchers get a board of open loads, a scored truck list (HOS, deadhead, fuel, ETA, trailer fit, fairness), assign or override (override reason required), fleet readiness, and a fairness audit. Samsara is stubbed as the first future ELD connector. The pilot runs on **demo fleet data** — no live API keys required.
+Dispatchers get a **Today** board of loads that need cover, a plain-English reason for the recommended truck, and one-tap Assign. Fleet CSV upload and a skippable first-run setup are included. Fairness / override-rate tools exist as an **optional Advanced** setting (off by default). Samsara is stubbed as a future ELD connector. The pilot runs on **demo fleet data** — no live API keys required.
 
 ## Demo login
 
@@ -11,9 +11,9 @@ Dispatchers get a board of open loads, a scored truck list (HOS, deadhead, fuel,
 | Dispatcher | `dispatcher@relayops.demo` | `RelayOps2026!` | Full — create loads, assign, override, sync settings |
 | Viewer | `viewer@relayops.demo` | `Viewer2026!` | Read-only |
 
-A second dispatcher (`jordan@relayops.demo` / same password) exists so the audit screen can show two override rates.
+A second dispatcher (`jordan@relayops.demo` / same password) exists for the optional fairness tools.
 
-The UI shows a **Demo data** badge. Seeded data includes 22 trucks (including Truck 184 / Marcus Hill) and 15 loads across Midwest / South lanes.
+The UI shows a **Demo data** badge while the sample fleet is in use. Seeded data includes 22 trucks (including Truck 184 / Marcus Hill) and 15 loads across Midwest / South lanes.
 
 ## Local run
 
@@ -46,9 +46,9 @@ Each open load is ranked against the live truck pool from **seed / database fiel
 | Fuel | `(deadhead + loaded miles) / MPG × diesel` |
 | ETA | Can the truck make the pickup window at 55 mph |
 | Trailer fit | Dry van / reefer / flatbed must match |
-| Fairness | Weekly load count vs fleet average |
+| Fairness | Weekly load count vs fleet average (used in ranking; the audit UI is optional) |
 
-Legal-now + trailer match + enough HOS is **eligible**. Picking anyone else is an **override** and requires a written reason, which is written to the fairness audit.
+Legal-now + trailer match + enough HOS is **eligible**. Picking anyone else still works with a **short note**.
 
 ## Company pilot deploy (shareable URL)
 
@@ -63,7 +63,7 @@ Legal-now + trailer match + enough HOS is **eligible**. Picking anyone else is a
    - `DATABASE_URL` is optional and unused on Vercel
 4. Deploy. Share the URL plus the demo dispatcher account.
 
-Production uses an **in-memory demo store** so serverless functions do not need a writable SQLite file. Login, matching, assign, and audit work for a click-through pilot. Writes reset when a new serverless instance starts. For a week-long company pilot with durable traffic, use Postgres (below).
+Production uses an **in-memory demo store** so serverless functions do not need a writable SQLite file. Login, matching, assign, and optional fairness tools work for a click-through pilot. Writes reset when a new serverless instance starts. For a week-long company pilot with durable traffic, use Postgres (below).
 
 ### Persistent pilot (recommended for a real fleet test)
 
@@ -89,15 +89,16 @@ See `.env.example`.
 
 ## Product map
 
-- **Board** — KPIs + open loads. Select a load for ranked trucks.
-- **Load** — New load intake (pickup/delivery, windows, trailer, weight, notes). TMS import is stubbed.
-- **Fleet** — Filter available vs not. Upload or paste a truck/driver CSV (replace or merge). Location, HOS, equipment, readiness.
-- **Audit** — Overrides, load imbalance, policy flags (override rate &gt; 10%).
-- **Setup** — Samsara placeholder config (demo mode on). Motive and Geotab marked later.
+- **Today** — Open loads sorted by appointment. Each row shows the lane, window, best truck, and a one-line why. Assign uses the top-ranked truck; expand for other options.
+- **New load** — Pickup, delivery, windows, trailer, weight.
+- **Fleet** — Ready vs not. Add a few trucks or upload a CSV (replace or merge).
+- **Setup** — Samsara placeholder (demo mode on). **Advanced → Fairness tools** is off by default.
+
+First visit (or a still-demo fleet) offers a short, skippable onboarding: add trucks → cover a load → assign.
 
 ## Fleet CSV upload
 
-Dispatchers can load a company fleet without Samsara from **Fleet** or **Setup**. Download the template at `/api/fleet/template` or use **Download template** in the app.
+Dispatchers can load a company fleet without Samsara from **Fleet**. Download the template at `/api/fleet/template` or use **Template** in the app.
 
 | Column | Required | Notes |
 | --- | --- | --- |
@@ -109,7 +110,7 @@ Dispatchers can load a company fleet without Samsara from **Fleet** or **Setup**
 | `hosDutyMinutesRemaining` | no | Default 600 |
 | `mpg` | no | Fuel efficiency; default 7 |
 | `status` | no | `available` / `unavailable` (also legal_now, hos_blocked, maintenance) |
-| `weeklyLoadCount` | no | Used by the fairness score; default 0 |
+| `weeklyLoadCount` | no | Used by ranking; default 0 |
 
 Example:
 
@@ -122,7 +123,7 @@ truckNumber,driverName,trailerType,lat,lng,hosDriveMinutesRemaining,hosDutyMinut
 
 - **Replace** swaps the live truck list. **Merge** upserts by truck number.
 - Bad rows are listed and skipped. If the file has no valid rows, the current fleet is left unchanged.
-- Matching reads `store.listTrucks()` — the same list the board uses — so an import is live immediately.
+- Matching reads `store.listTrucks()` — the same list Today uses — so an import is live immediately.
 - On Vercel the fleet is in-memory: it lasts for the serverless instance and **resets to demo trucks on a cold start**. Paste the CSV again after a reset. Samsara is still optional later for live GPS/HOS.
 
 ## Stack
