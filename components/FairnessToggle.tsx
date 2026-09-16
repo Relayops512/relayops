@@ -13,7 +13,7 @@ export function FairnessToggle({ enabled }: { enabled: boolean }) {
           className="mt-1 accent-teal"
           onChange={(event) => event.currentTarget.form?.requestSubmit()}
         />
-        <span>
+        <span className="min-w-0 flex-1">
           <span className="font-semibold text-ink">Fairness tools</span>
           <span className="mt-1 block text-ink-muted">
             Off by default. When on, you get override rates and load-balance views. Assigning
