@@ -19,6 +19,7 @@ function truck(partial: Partial<Truck> & Pick<Truck, "id" | "unitNumber" | "driv
     hosDriveMinutes: 480,
     hosDutyMinutes: 600,
     trailerType: "DRY_VAN",
+    hazmat: "NONE",
     mpg: 7.4,
     readiness: "LEGAL_NOW",
     weeklyLoadCount: 2,
@@ -120,6 +121,7 @@ describe("samsara mapping", () => {
     assert.equal(byUnit["184"].truck.hosDriveMinutes, 525);
     assert.equal(byUnit["184"].truck.hosDutyMinutes, 605);
     assert.equal(byUnit["184"].truck.trailerType, "DRY_VAN");
+    assert.equal(byUnit["184"].truck.hazmat, "NONE");
     assert.equal(byUnit["184"].trailerInferred, true);
     assert.equal(byUnit["184"].truck.source, "samsara");
     assert.equal(byUnit["184"].truck.samsaraVehicleId, "veh-184");
@@ -189,6 +191,32 @@ describe("samsara merge", () => {
     assert.equal(byUnit["184"].mpg, 7.6);
     assert.equal(byUnit["184"].samsaraVehicleId, "veh-184");
     assert.equal(byUnit["401"].unitNumber, "401");
+  });
+
+  it("keeps an existing hazmat placard when Samsara does not send one", () => {
+    const existing = [
+      truck({
+        id: "csv-301",
+        unitNumber: "301",
+        driverName: "Tanner Cole",
+        trailerType: "TANKER",
+        hazmat: "UN1057",
+        source: "csv",
+      }),
+    ];
+    const incoming = [
+      mapped({
+        id: "s-301",
+        unitNumber: "301",
+        driverName: "Tanner Cole",
+        samsaraVehicleId: "veh-301",
+        trailerType: "TANKER",
+        hazmat: "NONE",
+      }),
+    ];
+    const result = mergeSamsaraTrucks(existing, incoming, "merge");
+    assert.equal(result.trucks[0].hazmat, "UN1057");
+    assert.equal(result.trucks[0].trailerType, "TANKER");
   });
 
   it("matches a later sync by Samsara vehicle id even if the truck number changed", () => {

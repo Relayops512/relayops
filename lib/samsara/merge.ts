@@ -1,4 +1,5 @@
 import type { Truck } from "../types";
+import { HAZMAT_NONE } from "../equipment";
 import type { MappedSamsaraTruck } from "./map";
 
 export type SamsaraMergeMode = "merge" | "replace";
@@ -55,6 +56,7 @@ export function applySamsaraTruck(existing: Truck | undefined, mapped: MappedSam
     hosDriveMinutes,
     hosDutyMinutes,
     trailerType,
+    hazmat: existing.hazmat && existing.hazmat !== HAZMAT_NONE ? existing.hazmat : incoming.hazmat || HAZMAT_NONE,
     mpg: existing.mpg,
     weeklyLoadCount: existing.weeklyLoadCount,
     fuelGallons: existing.fuelGallons,
