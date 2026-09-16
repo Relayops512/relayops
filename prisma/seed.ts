@@ -201,42 +201,41 @@ async function main() {
     });
   }
 
-  const assignedLoads = await prisma.load.findMany({ where: { status: "ASSIGNED" } });
+  const ford = await prisma.load.findUniqueOrThrow({ where: { reference: "RO-4401" } });
+  const lowes = await prisma.load.findUniqueOrThrow({ where: { reference: "RO-4394" } });
   const ty = await prisma.truck.findUniqueOrThrow({ where: { unitNumber: "118" } });
   const marcus = await prisma.truck.findUniqueOrThrow({ where: { unitNumber: "184" } });
 
-  if (assignedLoads[0]) {
-    await prisma.assignment.create({
-      data: {
-        loadId: assignedLoads[0].id,
-        truckId: ty.id,
-        assignedById: dispatcher.id,
-        score: 81.4,
-        reasonsJson: JSON.stringify([
-          { label: "Legal now", tone: "good" },
-          { label: "42 mi deadhead", tone: "good" },
-        ]),
-        isOverride: false,
-      },
-    });
-  }
-  if (assignedLoads[1]) {
-    await prisma.assignment.create({
-      data: {
-        loadId: assignedLoads[1].id,
-        truckId: marcus.id,
-        assignedById: dispatcher2.id,
-        score: 64.2,
-        reasonsJson: JSON.stringify([
-          { label: "Heavy week — fairness", tone: "warn" },
-          { label: "118 mi deadhead", tone: "warn" },
-        ]),
-        isOverride: true,
-        overrideReason: "Shipper requested Marcus after last week's on-time delivery.",
-        topTruckId: (await prisma.truck.findUniqueOrThrow({ where: { unitNumber: "255" } })).id,
-      },
-    });
-  }
+  await prisma.assignment.create({
+    data: {
+      loadId: ford.id,
+      truckId: ty.id,
+      assignedById: dispatcher.id,
+      score: 81.4,
+      reasonsJson: JSON.stringify([
+        { label: "Legal now", tone: "good" },
+        { label: "42 mi deadhead", tone: "good" },
+      ]),
+      isOverride: false,
+      coveringStatus: "EN_ROUTE_DELIVERY",
+    },
+  });
+  await prisma.assignment.create({
+    data: {
+      loadId: lowes.id,
+      truckId: marcus.id,
+      assignedById: dispatcher2.id,
+      score: 64.2,
+      reasonsJson: JSON.stringify([
+        { label: "Heavy week — fairness", tone: "warn" },
+        { label: "118 mi deadhead", tone: "warn" },
+      ]),
+      isOverride: true,
+      overrideReason: "Shipper requested Marcus after last week's on-time delivery.",
+      topTruckId: (await prisma.truck.findUniqueOrThrow({ where: { unitNumber: "255" } })).id,
+      coveringStatus: "ASSIGNED",
+    },
+  });
 
   await prisma.auditEvent.createMany({
     data: [

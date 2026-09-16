@@ -10,6 +10,7 @@ import type { LoadPriority, TrailerType } from "@/lib/types";
 import { CITIES } from "@/lib/cities";
 import { setOnboardingCookie } from "@/lib/onboarding";
 import { HAZMAT_NONE, TRAILER_TYPES, normalizeHazmat } from "@/lib/equipment";
+import { COVERING_LABELS, isCoveringStatus } from "@/lib/covering";
 
 const trailerEnum = z.enum(TRAILER_TYPES);
 const priorityEnum = z.enum(["STANDARD", "HIGH"]);
@@ -159,12 +160,45 @@ export async function assignLoadAction(formData: FormData): Promise<{ error?: st
   });
 
   revalidatePath("/board");
+  revalidatePath("/covering");
   revalidatePath("/fleet");
   revalidatePath("/audit");
   revalidatePath("/setup");
   revalidatePath(`/loads/${loadId}`);
   const returnTo = String(formData.get("returnTo") ?? "");
-  redirect(returnTo === "board" ? "/board" : `/loads/${loadId}`);
+  if (returnTo === "covering") redirect("/covering");
+  if (returnTo === "board") redirect("/board");
+  redirect(`/loads/${loadId}`);
+}
+
+export async function updateCoveringStatusAction(formData: FormData): Promise<{ error?: string }> {
+  const session = await requireDispatcher();
+  const loadId = String(formData.get("loadId") ?? "");
+  const statusRaw = String(formData.get("status") ?? "");
+  if (!isCoveringStatus(statusRaw)) return { error: "Unknown status." };
+
+  const load = store.getLoad(loadId);
+  const assignment = store.getAssignmentForLoad(loadId);
+  if (!load || !assignment) return { error: "Load is not assigned." };
+  if (load.status === "OPEN") return { error: "Assign this load first." };
+
+  store.setCoveringStatus(loadId, statusRaw);
+  store.addAudit({
+    kind: "ASSIGNMENT",
+    actorId: session.user.id,
+    message:
+      statusRaw === "DELIVERED"
+        ? `${session.user.name} marked ${load.reference} complete (${assignment.truck.unitNumber} · ${assignment.truck.driverName}).`
+        : `${session.user.name} set ${load.reference} to ${COVERING_LABELS[statusRaw].toLowerCase()}.`,
+    metaJson: JSON.stringify({ loadId, status: statusRaw, truckId: assignment.truckId }),
+  });
+
+  revalidatePath("/board");
+  revalidatePath("/covering");
+  revalidatePath("/fleet");
+  revalidatePath("/audit");
+  revalidatePath(`/loads/${loadId}`);
+  return {};
 }
 
 export async function syncSamsaraAction(formData?: FormData) {

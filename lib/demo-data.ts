@@ -221,6 +221,7 @@ export function createDemoState(): DemoState {
       isOverride: false,
       overrideReason: null,
       topTruckId: "truck-118",
+      coveringStatus: "EN_ROUTE_DELIVERY",
       createdAt: hoursFromNow(-16),
     },
     {
@@ -236,6 +237,7 @@ export function createDemoState(): DemoState {
       isOverride: true,
       overrideReason: "Shipper requested Marcus after last week's on-time delivery.",
       topTruckId: "truck-255",
+      coveringStatus: "ASSIGNED",
       createdAt: hoursFromNow(-22),
     },
   ];

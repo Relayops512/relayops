@@ -2,6 +2,7 @@ import { store } from "@/lib/store";
 import { estimateDeadhead, rankTrucks } from "@/lib/matching";
 import { hazmatSatisfied } from "@/lib/equipment";
 import { buildTodayItem } from "@/lib/today";
+import { buildCoveringItem } from "@/lib/covering";
 
 export async function getDashboard() {
   const loads = store.listOpenLoads();
@@ -62,6 +63,18 @@ export async function getDashboard() {
       overPolicyCount: overPolicy.length,
       needCover,
     },
+  };
+}
+
+export async function getCoveringBoard() {
+  const settings = store.getSettings();
+  const active = store.listCovering("active").map(buildCoveringItem);
+  const done = store.listCovering("done").map(buildCoveringItem);
+  return {
+    active,
+    done,
+    settings,
+    isDemoFleet: settings.fleetIsDemo,
   };
 }
 

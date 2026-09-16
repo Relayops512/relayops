@@ -6,7 +6,7 @@ Cover loads with the best available truck.
 
 1. **Sign in** — Use the dispatcher account. Today opens first.
 2. **Today** — Open loads, the best available truck, and a one-line why.
-3. **Assign** — Puts that truck on the load. Other trucks is there if you need someone else — add a short note.
+3. **Assign** — Puts that truck on the load. Assigned loads stay on Covering. Other trucks is there if you need someone else — add a short note.
 4. **New load** — When freight comes in: pickup, delivery, window, trailer.
 5. **Fleet CSV** — When the truck list changes, upload or paste a CSV on Fleet. Matching updates immediately.
 
@@ -21,6 +21,7 @@ If you already have a spreadsheet, go to Fleet and use Upload fleet CSV (or past
 | Place | What it’s for |
 | --- | --- |
 | Today | Loads that need cover. Assign the recommended truck. |
+| Covering | Assigned loads — truck, driver, and status until complete. |
 | New load | Lane, appointment, trailer, and weight. |
 | Fleet | Who’s ready. Add a few trucks or upload a CSV. |
 | Setup | Samsara later. Fairness tools sit under Advanced, off by default. |

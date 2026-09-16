@@ -22,7 +22,11 @@ export function TodayBoard({
           title="You're covered"
           body={
             <>
-              No open loads right now. Add one when freight comes in, or open{" "}
+              No open loads right now. Assigned freight stays on{" "}
+              <Link href="/covering" className="font-semibold text-teal">
+                Covering
+              </Link>
+              . Add one when freight comes in, or open{" "}
               <Link href="/help" className="font-semibold text-teal">
                 Help
               </Link>
@@ -85,7 +89,7 @@ export function TodayBoard({
                     truckId={item.best.truckId}
                     isOverride={false}
                     canWrite={canWrite}
-                    returnTo="board"
+                    returnTo="covering"
                     label="Assign"
                   />
                 ) : null}
@@ -122,7 +126,7 @@ export function TodayBoard({
                         truckId={option.truckId}
                         isOverride={!option.isBest || !option.eligible}
                         canWrite={canWrite}
-                        returnTo="board"
+                        returnTo="covering"
                         label={option.isBest ? "Assign" : "Use this truck"}
                         className="sm:min-w-56"
                       />
