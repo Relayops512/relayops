@@ -32,6 +32,9 @@ yarn-error.log*
 .env
 .env*.local
 
+# local encrypted Samsara connection (localhost durable path)
+.data/
+
 # typescript
 *.tsbuildinfo
 

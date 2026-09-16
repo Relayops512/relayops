@@ -30,7 +30,7 @@ export function FleetCsvUpload({
           <p className="text-sm text-ink-muted">
             {compact
               ? "Truck number and driver are enough. Matching updates immediately."
-              : "Load trucks and drivers from a spreadsheet. Valid rows update matching immediately."}
+              : "Load trucks and drivers from a spreadsheet. Valid rows update matching immediately. Samsara is optional in Setup."}
           </p>
         </div>
         <a href="/api/fleet/template" className="btn-ghost">
@@ -52,7 +52,8 @@ export function FleetCsvUpload({
           </dl>
           <p className="mb-4 text-xs text-ink-faint">
             Missing lat/lng marks location unknown. On Vercel an uploaded fleet lasts for this
-            serverless instance — a cold start resets to demo trucks.
+            serverless instance — a cold start resets to demo trucks. Samsara (Setup) can refresh
+            GPS and hours into this same list when connected.
           </p>
         </>
       )}

@@ -3,6 +3,7 @@ export type TrailerType = "DRY_VAN" | "REEFER" | "FLATBED";
 export type LoadStatus = "OPEN" | "ASSIGNED" | "COMPLETED";
 export type TruckReadiness = "LEGAL_NOW" | "HOS_BLOCKED" | "ON_LOAD" | "MAINTENANCE";
 export type LoadPriority = "STANDARD" | "HIGH";
+export type FleetSource = "demo" | "csv" | "manual" | "samsara";
 export type AuditKind =
   | "ASSIGNMENT"
   | "OVERRIDE"
@@ -36,6 +37,8 @@ export type Truck = {
   fuelGallons: number;
   lastPingAt: Date;
   locationKnown: boolean;
+  source: FleetSource;
+  samsaraVehicleId: string | null;
 };
 
 export type Load = {
@@ -88,11 +91,14 @@ export type AuditEvent = {
 export type IntegrationSetting = {
   id: string;
   provider: string;
-  enabled: boolean;
-  demoMode: boolean;
+  connected: boolean;
   orgId: string;
-  apiTokenHint: string;
+  orgName: string;
   lastSyncAt: Date | null;
+  lastSyncError: string | null;
+  lastSyncSummary: string;
+  encryptedTokens: string | null;
+  connectedAt: Date | null;
   notes: string;
 };
 

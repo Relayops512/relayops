@@ -118,6 +118,7 @@ export default async function FleetPage({
                         {formatMinutes(truck.hosDriveMinutes)} drive left
                         {" · "}
                         {trailerLabel(truck.trailerType)}
+                        {truck.source === "samsara" ? " · Samsara" : truck.source === "csv" ? " · CSV" : ""}
                         {settings.fairnessToolsEnabled
                           ? ` · ${truck.weeklyLoadCount} load${truck.weeklyLoadCount === 1 ? "" : "s"} this week`
                           : ""}
