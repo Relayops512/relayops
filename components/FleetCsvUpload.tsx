@@ -30,7 +30,7 @@ export function FleetCsvUpload({
           <p className="text-sm text-ink-muted">
             {compact
               ? "Truck number and driver are enough. Matching updates immediately."
-              : "Load trucks and drivers from a spreadsheet. Valid rows update matching immediately."}
+              : "Load trucks and drivers from a spreadsheet. Valid rows update matching immediately. Samsara is optional in Setup."}
           </p>
         </div>
         <a href="/api/fleet/template" className="btn-ghost">
@@ -55,6 +55,9 @@ export function FleetCsvUpload({
             softshell. Hazmat defaults to none; a load that needs 1057 or 1005 only
             matches a truck with that same placard. On Vercel an uploaded fleet lasts
             for this serverless instance — a cold start resets to demo trucks.
+            Missing lat/lng marks location unknown. On Vercel an uploaded fleet lasts for this
+            serverless instance — a cold start resets to demo trucks. Samsara (Setup) can refresh
+            GPS and hours into this same list when connected.
           </p>
         </>
       )}

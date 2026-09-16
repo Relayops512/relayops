@@ -267,7 +267,7 @@ async function main() {
       {
         kind: "SAMSARA_SYNC",
         actorId: dispatcher.id,
-        message: "Dana Ortiz ran a demo Samsara sync. Live API keys are not required for this pilot.",
+        message: "Samsara is optional. This pilot can run on CSV or the sample fleet.",
       },
     ],
   });
@@ -281,7 +281,7 @@ async function main() {
       orgId: "relayops-midwest-demo",
       apiTokenHint: "",
       lastSyncAt: new Date(),
-      notes: "Pilot uses seeded demo fleet. Live Samsara pull is stubbed. Motive and Geotab connectors are planned next.",
+      notes: "Pilot can run on CSV or sample fleet. Connect Samsara from Setup when OAuth keys are set.",
     },
   });
 

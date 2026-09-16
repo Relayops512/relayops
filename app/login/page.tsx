@@ -22,7 +22,8 @@ export default async function LoginPage({
             Cover loads with the best available truck
           </h1>
           <p className="mt-3 text-base leading-relaxed text-ink-muted">
-            A calm dispatch board for today&apos;s freight.
+            A calm dispatch board for today&apos;s freight. Samsara is optional; CSV works for the
+            pilot.
           </p>
         </div>
         <form action={loginAction} className="card p-8">

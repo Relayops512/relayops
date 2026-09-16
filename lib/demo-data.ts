@@ -142,6 +142,8 @@ export function createDemoState(): DemoState {
     fuelGallons: t.fuelGallons,
     lastPingAt: new Date(),
     locationKnown: true,
+    source: "demo",
+    samsaraVehicleId: null,
   }));
 
   const loadRows: {
@@ -278,7 +280,7 @@ export function createDemoState(): DemoState {
       id: "aud-5",
       kind: "SAMSARA_SYNC",
       actorId: "user-dana",
-      message: "Dana Ortiz ran a demo Samsara sync. Live API keys are not required for this pilot.",
+      message: "Samsara is optional. This pilot can run on CSV or the sample fleet.",
       metaJson: JSON.stringify({ demo: true }),
       createdAt: hoursFromNow(-1),
     },
@@ -287,12 +289,15 @@ export function createDemoState(): DemoState {
   const integration: IntegrationSetting = {
     id: "samsara",
     provider: "samsara",
-    enabled: false,
-    demoMode: true,
-    orgId: "relayops-midwest-demo",
-    apiTokenHint: "",
-    lastSyncAt: new Date(),
-    notes: "Pilot uses seeded demo fleet. Live Samsara pull is stubbed. Motive and Geotab connectors are planned next.",
+    connected: false,
+    orgId: "",
+    orgName: "",
+    lastSyncAt: null,
+    lastSyncError: null,
+    lastSyncSummary: "",
+    encryptedTokens: null,
+    connectedAt: null,
+    notes: "",
   };
 
   const settings: AppSettings = {

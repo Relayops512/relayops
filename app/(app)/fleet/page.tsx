@@ -81,14 +81,22 @@ export default async function FleetPage({
           <EmptyState
             title={trucks.length === 0 ? "No trucks yet" : "Nobody in this list"}
             body={
-              trucks.length === 0
-                ? "Add a few trucks or upload a CSV. Then Today can recommend cover."
-                : "Try Ready or All."
+              trucks.length === 0 ? (
+                <>
+                  Add a few trucks or upload a CSV above.{" "}
+                  <Link href="/help" className="font-semibold text-teal">
+                    Help
+                  </Link>{" "}
+                  has the walkthrough.
+                </>
+              ) : (
+                "Try Ready or All."
+              )
             }
             action={
-              trucks.length === 0 && canWrite ? (
-                <Link href="/setup" className="btn-ghost">
-                  Setup
+              trucks.length === 0 ? (
+                <Link href="/help" className="btn-ghost">
+                  Help
                 </Link>
               ) : undefined
             }

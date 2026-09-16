@@ -20,13 +20,25 @@ export function TodayBoard({
       <section className="card">
         <EmptyState
           title="You're covered"
-          body="No open loads right now. Add one when freight comes in and we'll show the best available truck."
+          body={
+            <>
+              No open loads right now. Add one when freight comes in, or open{" "}
+              <Link href="/help" className="font-semibold text-teal">
+                Help
+              </Link>
+              .
+            </>
+          }
           action={
             canWrite ? (
               <Link href="/loads/new" className="btn-primary">
                 New load
               </Link>
-            ) : undefined
+            ) : (
+              <Link href="/help" className="btn-ghost">
+                Help
+              </Link>
+            )
           }
         />
       </section>

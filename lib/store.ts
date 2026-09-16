@@ -1,4 +1,5 @@
 import { createDemoState, type DemoState } from "./demo-data";
+import { clearPersistedSamsara, readPersistedSamsara, writePersistedSamsara } from "./samsara/persist";
 import type {
   AppSettings,
   Assignment,
@@ -16,9 +17,40 @@ import type {
 
 const globalForStore = globalThis as unknown as { relayopsDemo?: DemoState };
 
+function hydrateConnection(s: DemoState) {
+  const persisted = readPersistedSamsara();
+  if (!persisted) return;
+  s.integration = {
+    ...s.integration,
+    connected: true,
+    orgId: persisted.orgId,
+    orgName: persisted.orgName,
+    encryptedTokens: persisted.encryptedTokens,
+    connectedAt: persisted.connectedAt ? new Date(persisted.connectedAt) : new Date(),
+    lastSyncAt: persisted.lastSyncAt ? new Date(persisted.lastSyncAt) : null,
+  };
+}
+
+function persistConnection() {
+  const i = state().integration;
+  if (!i.connected || !i.encryptedTokens) {
+    clearPersistedSamsara();
+    return;
+  }
+  writePersistedSamsara({
+    encryptedTokens: i.encryptedTokens,
+    orgId: i.orgId,
+    orgName: i.orgName,
+    connectedAt: i.connectedAt ? i.connectedAt.toISOString() : null,
+    lastSyncAt: i.lastSyncAt ? i.lastSyncAt.toISOString() : null,
+  });
+}
+
 function state(): DemoState {
   if (!globalForStore.relayopsDemo) {
-    globalForStore.relayopsDemo = createDemoState();
+    const next = createDemoState();
+    hydrateConnection(next);
+    globalForStore.relayopsDemo = next;
   }
   return globalForStore.relayopsDemo;
 }
@@ -81,7 +113,17 @@ export const store = {
   },
 
   getIntegration(): IntegrationSetting {
-    return state().integration;
+    const i = state().integration;
+    return { ...i, encryptedTokens: i.encryptedTokens ? "set" : null };
+  },
+
+  getEncryptedSamsaraTokens(): string | null {
+    return state().integration.encryptedTokens;
+  },
+
+  isSamsaraConnected(): boolean {
+    const i = state().integration;
+    return i.connected && Boolean(i.encryptedTokens);
   },
 
   createLoad(input: {
@@ -156,25 +198,35 @@ export const store = {
     return assignment;
   },
 
-  saveIntegration(input: {
-    enabled: boolean;
-    demoMode: boolean;
-    orgId: string;
-    apiTokenHint?: string;
-  }) {
-    const current = state().integration;
-    state().integration = {
-      ...current,
-      enabled: input.enabled,
-      demoMode: input.demoMode,
-      orgId: input.orgId,
-      apiTokenHint: input.apiTokenHint ?? current.apiTokenHint,
-    };
+  setSamsaraTokens(encryptedTokens: string, meta?: { orgId?: string; orgName?: string }) {
+    const i = state().integration;
+    i.connected = true;
+    i.encryptedTokens = encryptedTokens;
+    i.connectedAt = i.connectedAt ?? new Date();
+    i.lastSyncError = null;
+    if (meta?.orgId != null) i.orgId = meta.orgId;
+    if (meta?.orgName != null) i.orgName = meta.orgName;
+    persistConnection();
   },
 
-  markSamsaraSynced() {
-    state().integration.lastSyncAt = new Date();
-    state().integration.demoMode = true;
+  disconnectSamsara() {
+    const i = state().integration;
+    i.connected = false;
+    i.encryptedTokens = null;
+    i.connectedAt = null;
+    i.orgId = "";
+    i.orgName = "";
+    i.lastSyncError = null;
+    i.lastSyncSummary = "";
+    persistConnection();
+  },
+
+  markSamsaraSynced(input: { summary: string; error: string | null }) {
+    const i = state().integration;
+    i.lastSyncAt = new Date();
+    i.lastSyncSummary = input.summary;
+    i.lastSyncError = input.error;
+    persistConnection();
   },
 
   getSettings(): AppSettings {
@@ -208,16 +260,25 @@ export const store = {
       (t) => t.unitNumber.toLowerCase() === truck.unitNumber.toLowerCase(),
     );
     if (idx >= 0) {
-      s.trucks[idx] = { ...truck, id: s.trucks[idx].id };
+      const existing = s.trucks[idx];
+      s.trucks[idx] = {
+        ...truck,
+        id: existing.id,
+        samsaraVehicleId: truck.samsaraVehicleId ?? existing.samsaraVehicleId,
+      };
     } else {
       s.trucks.push(truck);
     }
     s.settings.fleetIsDemo = false;
   },
 
-  replaceTrucks(trucks: Truck[]) {
+  setTrucks(trucks: Truck[]) {
     state().trucks = trucks;
     state().settings.fleetIsDemo = false;
+  },
+
+  replaceTrucks(trucks: Truck[]) {
+    this.setTrucks(trucks);
   },
 
   mergeTrucks(incoming: Truck[]): { created: number; updated: number } {
@@ -229,7 +290,13 @@ export const store = {
         (t) => t.unitNumber.toLowerCase() === truck.unitNumber.toLowerCase(),
       );
       if (idx >= 0) {
-        s.trucks[idx] = { ...truck, id: s.trucks[idx].id };
+        const existing = s.trucks[idx];
+        s.trucks[idx] = {
+          ...truck,
+          id: existing.id,
+          samsaraVehicleId: truck.samsaraVehicleId ?? existing.samsaraVehicleId,
+          source: truck.source ?? existing.source,
+        };
         updated += 1;
       } else {
         s.trucks.push(truck);

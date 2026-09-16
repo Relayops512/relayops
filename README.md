@@ -2,13 +2,13 @@
 
 RelayOps is a company-pilot web app that covers incoming truck loads with the **best available truck** — closest, legal, and on time.
 
-Dispatchers get a **Today** board of loads that need cover, a plain-English reason for the recommended truck, and one-tap Assign. Fleet CSV upload and a skippable first-run setup are included. Fairness / override-rate tools exist as an **optional Advanced** setting (off by default). Samsara is stubbed as a future ELD connector. The pilot runs on **demo fleet data** — no live API keys required.
+Dispatchers get a **Today** board of loads that need cover, a plain-English reason for the recommended truck, and one-tap Assign. Fleet CSV upload and a skippable first-run setup are included. Fairness / override-rate tools exist as an **optional Advanced** setting (off by default). Samsara is stubbed as a future ELD connector. The pilot runs on **demo fleet data** — no live API keys required. In-app **Help** is a one-page dispatcher quick start (also `/help.md`).
 
 ## Demo login
 
 | Role | Email | Password | Access |
 | --- | --- | --- | --- |
-| Dispatcher | `dispatcher@relayops.demo` | `RelayOps2026!` | Full — create loads, assign, override, sync settings |
+| Dispatcher | `dispatcher@relayops.demo` | `RelayOps2026!` | Full — create loads, assign, override, connect Samsara, sync |
 | Viewer | `viewer@relayops.demo` | `Viewer2026!` | Read-only |
 
 A second dispatcher (`jordan@relayops.demo` / same password) exists for the optional fairness tools.
@@ -62,6 +62,7 @@ Legal-now + trailer match + matching hazmat (when required) + enough HOS is **el
    - `AUTH_URL` — `https://relayops.vercel.app` (or your Vercel URL)
    - `AUTH_TRUST_HOST` — `true`
    - `DATABASE_URL` is optional and unused on Vercel
+   - Samsara is optional. Without `SAMSARA_CLIENT_ID` / `SAMSARA_CLIENT_SECRET`, Setup shows **Samsara not configured** and the rest of the app still works.
 4. Deploy. Share the URL plus the demo dispatcher account.
 
 Production uses an **in-memory demo store** so serverless functions do not need a writable SQLite file. Login, matching, assign, and optional fairness tools work for a click-through pilot. Writes reset when a new serverless instance starts. For a week-long company pilot with durable traffic, use Postgres (below).
@@ -87,6 +88,11 @@ See `.env.example`.
 | `AUTH_URL` | recommended | Canonical app URL for Auth.js |
 | `AUTH_TRUST_HOST` | recommended on Vercel | Allow Auth.js behind the Vercel proxy |
 | `DATABASE_URL` | optional | Only for local Prisma/SQLite (`file:./dev.db`) |
+| `SAMSARA_CLIENT_ID` | optional | Samsara OAuth App ID |
+| `SAMSARA_CLIENT_SECRET` | optional | Samsara OAuth App Secret |
+| `SAMSARA_REDIRECT_URI` | optional | Must match the Samsara app redirect URL. Defaults to `{AUTH_URL}/api/integrations/samsara/callback` |
+| `SAMSARA_API_BASE` | optional | Defaults to `https://api.samsara.com` (use `https://api.eu.samsara.com` for EU) |
+| `SAMSARA_ENCRYPTION_KEY` | optional | Extra key for token encryption; defaults to `AUTH_SECRET` |
 
 ## Product map
 
@@ -94,6 +100,7 @@ See `.env.example`.
 - **New load** — Pickup, delivery, windows, trailer / equipment type, hazmat product, weight.
 - **Fleet** — Ready vs not. Add a few trucks or upload a CSV (replace or merge).
 - **Setup** — Samsara placeholder (demo mode on). **Advanced → Fairness tools** is off by default.
+- **Help** — One-page quick start from the header (or Setup). Printable; markdown at `/help.md`.
 
 First visit (or a still-demo fleet) offers a short, skippable onboarding: add trucks → cover a load → assign.
 
@@ -127,7 +134,62 @@ truckNumber,driverName,trailerType,hazmat,lat,lng,hosDriveMinutesRemaining,hosDu
 - **Replace** swaps the live truck list. **Merge** upserts by truck number.
 - Bad rows are listed and skipped. If the file has no valid rows, the current fleet is left unchanged.
 - Matching reads `store.listTrucks()` — the same list Today uses — so an import is live immediately.
-- On Vercel the fleet is in-memory: it lasts for the serverless instance and **resets to demo trucks on a cold start**. Paste the CSV again after a reset. Samsara is still optional later for live GPS/HOS.
+- On Vercel the fleet is in-memory: it lasts for the serverless instance and **resets to demo trucks on a cold start**. Paste the CSV again after a reset, or tap **Sync now** if Samsara is connected.
+
+## Connect Samsara
+
+Samsara is **read-only**. RelayOps never writes vehicles, drivers, or loads back to Samsara. Loads stay CSV/manual.
+
+Synced fields land in the **same** truck list matching uses (`store.listTrucks()`): truck number/name, driver, latest GPS, HOS drive/duty remaining, and equipment/trailer when it appears on a Samsara attribute. Default sync is **upsert/merge** (CSV-only trucks stay). **Replace from Samsara** is an explicit choice.
+
+### Create the OAuth app (for Luke)
+
+1. In Samsara: **Settings → OAuth 2.0 Apps** → create an app. Docs: [OAuth 2.0](https://developers.samsara.com/docs/oauth-20).
+2. App name: `RelayOps`.
+3. Redirect URL (must match the env var exactly):
+   - Local: `http://localhost:3000/api/integrations/samsara/callback`
+   - Vercel: `https://<your-app>.vercel.app/api/integrations/samsara/callback`
+4. Select **read** scopes only:
+   - Read Vehicles
+   - Read Drivers
+   - Read Assignments
+   - Read Vehicle Statistics (GPS)
+   - Read ELD Compliance Settings (US) (HOS clocks)
+5. Copy **App ID** (`SAMSARA_CLIENT_ID`) and **App Secret** (`SAMSARA_CLIENT_SECRET`).
+6. Set those plus `SAMSARA_REDIRECT_URI` in `.env` (local) or the Vercel project, then restart/redeploy.
+7. Sign in as a dispatcher → **Setup** → **Connect Samsara**. Approve the app. RelayOps exchanges the code at `/api/integrations/samsara/callback` and pulls the fleet.
+
+If the env vars are missing, Setup shows **Samsara not configured** with this short how-to. Demo login, Today, and CSV still work.
+
+Samsara may require HTTPS for some redirect URLs. Localhost usually works for development; if authorize fails, use an HTTPS tunnel and put that callback URL on the app.
+
+### After connect
+
+- Status: **Connected · last sync …**
+- **Sync now** — merge/upsert by Samsara vehicle id, then truck number
+- **Disconnect** — drops the connection; the live truck list stays
+- **Replace fleet from Samsara** — removes trucks that aren’t in Samsara (including CSV-only)
+
+Setup also refreshes when the last sync is older than 15 minutes.
+
+### Tokens and cold starts
+
+Access and refresh tokens are encrypted at rest with AES-256-GCM (`AUTH_SECRET` or `SAMSARA_ENCRYPTION_KEY`).
+
+| Host | What persists |
+| --- | --- |
+| Localhost | Encrypted tokens in `.data/samsara.json` (gitignored). Fleet is still in memory — tap **Sync now** after a restart if trucks look like sample data. |
+| Vercel demo | In-memory only. A **cold start drops the connection and the fleet**. Connect again (or use CSV). Fine for a click-through pilot. |
+| Durable production | Store the encrypted token blob in a database. This demo path does not add Postgres automatically. |
+
+RelayOps never logs raw tokens. Refresh tokens are rotated on use (Samsara single-use refresh).
+
+### Sandbox / end-to-end check
+
+1. `cp .env.example .env` and fill the three `SAMSARA_*` values from a Samsara OAuth app pointed at `http://localhost:3000/api/integrations/samsara/callback`.
+2. `npm run dev` → sign in as `dispatcher@relayops.demo`.
+3. Setup → Connect Samsara → allow → you should land on Setup with **Connected** and trucks tagged **Samsara** on Fleet.
+4. Without credentials, Setup shows **Samsara not configured** and the rest of the demo is unchanged.
 
 ## Stack
 

@@ -297,5 +297,7 @@ export function parsedRowToTruck(row: ParsedFleetRow, existingId?: string): Truc
     fuelGallons: 80,
     lastPingAt: new Date(),
     locationKnown: row.locationKnown,
+    source: "csv",
+    samsaraVehicleId: null,
   };
 }
